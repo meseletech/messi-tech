@@ -1,106 +1,137 @@
 <template>
   <div class="add-property-page">
     <div class="form-container animate-fadeIn auth-card">
-      
-      <!-- Sticky Title -->
+
       <h2 class="title">{{ t('addProperty.title') }}</h2>
 
-      <!-- Scrollable Form Content -->
       <div class="form-scrollable">
-        <!-- Error Message -->
-        <div v-if="error" class="alert error animate-fadeIn">{{ error }}</div>
 
-        <!-- Success Message -->
-        <div v-if="success" class="alert success animate-fadeIn">{{ success }}</div>
+        <!-- Error -->
+        <div v-if="error" class="alert error animate-fadeIn">
+          {{ error }}
+        </div>
+
+        <!-- Success -->
+        <div v-if="success" class="alert success animate-fadeIn">
+          {{ success }}
+        </div>
 
         <form @submit.prevent="submitProperty" class="property-form">
+
           <!-- Property Name -->
           <div class="form-group">
             <label class="form-label">{{ t('addProperty.propertyName') }}</label>
-            <input v-model="form.name" type="text" :placeholder="t('addProperty.propertyName')" required class="form-input" />
+            <input v-model="form.name" type="text" required class="form-input" />
           </div>
 
           <!-- Description -->
           <div class="form-group">
             <label class="form-label">{{ t('addProperty.description') }}</label>
-            <textarea v-model="form.description" :placeholder="t('addProperty.description')" required class="form-input"></textarea>
+            <textarea v-model="form.description" required class="form-input"></textarea>
           </div>
 
           <!-- Category -->
           <div class="form-group">
             <label class="form-label">{{ t('addProperty.category') }}</label>
             <select v-model="form.category" required class="form-input">
-              <option disabled value="">{{ t('addProperty.category') }}</option>
-              <option value="EventSupply">{{ t('addProperty.categoryOptions.eventSupply') }}</option>
-              <option value="ConstructionEquipment">{{ t('addProperty.categoryOptions.constructionEquipment') }}</option>
-              <option value="HealthcareMedical">{{ t('addProperty.categoryOptions.healthcareMedical') }}</option>
-              <option value="Other">{{ t('addProperty.categoryOptions.other') }}</option>
+              <option disabled value="">Select category</option>
+              <option value="EventSupply">Event & Supply</option>
+              <option value="ConstructionEquipment">Construction Equipment</option>
+              <option value="HealthcareMedical">Health & Medical</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
-          <!-- Pricing Grid -->
+          <!-- Custom Category -->
+          <div v-if="form.category === 'Other'" class="form-group animate-fadeIn">
+            <label class="form-label">Custom Category Name</label>
+            <input
+              v-model="form.customCategory"
+              type="text"
+              class="form-input"
+              placeholder="e.g. Office Equipment"
+              required
+            />
+          </div>
+
+          <!-- Pricing -->
           <div class="grid pricing-grid">
             <div>
-              <label class="form-label">{{ t('addProperty.hourlyPrice') }}</label>
-              <input v-model.number="form.rentalPriceperhour" type="number" min="0" placeholder="0" class="form-input" />
+              <label class="form-label">Hourly</label>
+              <input v-model.number="form.rentalPriceperhour" type="number" min="0" class="form-input" />
             </div>
             <div>
-              <label class="form-label">{{ t('addProperty.dailyPrice') }}</label>
-              <input v-model.number="form.rentalPriceperday" type="number" min="0" placeholder="0" class="form-input" />
+              <label class="form-label">Daily</label>
+              <input v-model.number="form.rentalPriceperday" type="number" min="0" class="form-input" />
             </div>
             <div>
-              <label class="form-label">{{ t('addProperty.weeklyPrice') }}</label>
-              <input v-model.number="form.rentalPriceperweek" type="number" min="0" placeholder="0" class="form-input" />
+              <label class="form-label">Weekly</label>
+              <input v-model.number="form.rentalPriceperweek" type="number" min="0" class="form-input" />
             </div>
             <div>
-              <label class="form-label">{{ t('addProperty.monthlyPrice') }}</label>
-              <input v-model.number="form.rentalPricepermonth" type="number" min="0" placeholder="0" class="form-input" />
+              <label class="form-label">Monthly</label>
+              <input v-model.number="form.rentalPricepermonth" type="number" min="0" class="form-input" />
             </div>
             <div>
-              <label class="form-label">{{ t('addProperty.yearlyPrice') }}</label>
-              <input v-model.number="form.rentalPriceperyear" type="number" min="0" placeholder="0" class="form-input" />
+              <label class="form-label">Yearly</label>
+              <input v-model.number="form.rentalPriceperyear" type="number" min="0" class="form-input" />
             </div>
           </div>
 
-          <!-- Number of Properties -->
+          <!-- Quantity -->
           <div class="form-group">
-            <label class="form-label">{{ t('addProperty.numberOfProperties') }}</label>
-            <input v-model.number="form.numberOfProperty" type="number" min="1" required class="form-input" />
+            <label class="form-label">Number of Properties</label>
+            <input
+              v-model.number="form.numberOfProperty"
+              type="number"
+              min="1"
+              required
+              class="form-input"
+            />
           </div>
 
-          <!-- Image Upload -->
+          <!-- Images -->
           <div class="form-group">
-            <label class="form-label">{{ t('addProperty.uploadImages') }}</label>
-            <input type="file" multiple accept="image/*" @change="handleImageUpload" class="form-input-file" />
-            <div v-if="previewImages.length" class="image-preview animate-fadeIn">
-              <img v-for="(img, index) in previewImages" :key="index" :src="img" class="image-thumb" />
+            <label class="form-label">Upload Images</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              @change="handleImageUpload"
+              class="form-input-file"
+            />
+            <div v-if="previewImages.length" class="image-preview">
+              <img
+                v-for="(img, index) in previewImages"
+                :key="index"
+                :src="img"
+                class="image-thumb"
+              />
             </div>
           </div>
 
-          <!-- Submit Button -->
           <button type="submit" :disabled="loading" class="btn-submit">
             <span v-if="loading" class="loading-spinner"></span>
-            {{ loading ? t('addProperty.submitting') : t('addProperty.createButton') }}
+            {{ loading ? 'Submitting...' : 'Create Property' }}
           </button>
+
         </form>
       </div>
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import axios from "axios";
-import { useI18n } from "vue-i18n";
+import { ref } from 'vue';
+import axios from 'axios';
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
-const router = useRouter();
 
 const form = ref({
-  name: "",
-  description: "",
-  category: "",
+  name: '',
+  description: '',
+  category: '',
+  customCategory: '',
   rentalPriceperhour: 0,
   rentalPriceperday: 0,
   rentalPriceperweek: 0,
@@ -111,44 +142,95 @@ const form = ref({
 
 const images = ref([]);
 const previewImages = ref([]);
-const error = ref("");
-const success = ref("");
+const error = ref('');
+const success = ref('');
 const loading = ref(false);
 
 const handleImageUpload = (e) => {
   images.value = Array.from(e.target.files);
-  previewImages.value = images.value.map((file) => URL.createObjectURL(file));
+  previewImages.value = images.value.map(file =>
+    URL.createObjectURL(file)
+  );
 };
 
 const submitProperty = async () => {
-  error.value = "";
-  success.value = "";
+  error.value = '';
+  success.value = '';
   loading.value = true;
 
   try {
-    const token = localStorage.getItem("merchantToken");
-    if (!token) throw new Error("No token found. Please log in again.");
+    const token = localStorage.getItem('merchantToken');
+    if (!token) throw new Error('Authentication required');
+
+    if (images.value.length === 0) {
+      throw new Error('At least one image is required');
+    }
+
+    // 🧼 Clean customCategory if not needed
+    if (form.value.category !== 'Other') {
+      form.value.customCategory = undefined;
+    }
 
     const formData = new FormData();
-    Object.entries(form.value).forEach(([key, val]) => formData.append(key, val));
-    images.value.forEach((img) => formData.append("images", img));
+    formData.append('name', form.value.name);
+    formData.append('description', form.value.description);
+    formData.append('category', form.value.category);
 
-    const response = await axios.post("https://lmgtech-4.onrender.com/merchant/properties", formData, {
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+    if (form.value.category === 'Other') {
+      if (!form.value.customCategory?.trim()) {
+        throw new Error('Custom category is required');
+      }
+      formData.append('customCategory', form.value.customCategory.trim());
+    }
+
+    formData.append('rentalPriceperhour', String(form.value.rentalPriceperhour));
+    formData.append('rentalPriceperday', String(form.value.rentalPriceperday));
+    formData.append('rentalPriceperweek', String(form.value.rentalPriceperweek));
+    formData.append('rentalPricepermonth', String(form.value.rentalPricepermonth));
+    formData.append('rentalPriceperyear', String(form.value.rentalPriceperyear));
+    formData.append('numberOfProperty', String(form.value.numberOfProperty));
+
+    images.value.forEach(file => {
+      formData.append('images', file);
     });
 
-    success.value = response.data.message || t('addProperty.successMessage');
-    form.value = { name:"", description:"", category:"", rentalPriceperhour:0, rentalPriceperday:0, rentalPriceperweek:0, rentalPricepermonth:0, rentalPriceperyear:0, numberOfProperty:1 };
+    const res = await axios.post(
+      'https://lmgtech-4.onrender.com/merchant/properties',
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    success.value = res.data.message || 'Property created successfully';
+
+    // 🔄 Reset form
+    form.value = {
+      name: '',
+      description: '',
+      category: '',
+      customCategory: '',
+      rentalPriceperhour: 0,
+      rentalPriceperday: 0,
+      rentalPriceperweek: 0,
+      rentalPricepermonth: 0,
+      rentalPriceperyear: 0,
+      numberOfProperty: 1,
+    };
+
     images.value = [];
     previewImages.value = [];
+
   } catch (err) {
-    error.value = err.response?.data?.message || t('addProperty.errorMessage');
+    console.error(err);
+    error.value = err.response?.data?.message || err.message || 'Something went wrong';
   } finally {
     loading.value = false;
   }
 };
 </script>
-
 <style scoped>
 .add-property-page {
   min-height: 100vh;
