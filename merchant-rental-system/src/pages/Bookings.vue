@@ -10,27 +10,46 @@
 
     <!-- Booking Grid -->
     <div v-if="!loading && bookings.length" class="bookings-grid">
-      <div v-for="booking in bookings" :key="booking.bookingId" class="booking-card">
+      <div
+        v-for="booking in bookings"
+        :key="booking.bookingId"
+        class="booking-card"
+      >
         <div class="booking-info">
           <h2>{{ booking.propertyName }}</h2>
-          <p><strong>{{ t('bookings.columns.customer') }}:</strong> {{ booking.customerName }}</p>
-          <p><strong>{{ t('bookings.columns.totalPrice') }}:</strong> {{ booking.totalPrice }}</p>
+
+          <p><strong>Customer:</strong> {{ booking.customerName }}</p>
+          <p><strong>Total Price:</strong> {{ booking.totalPrice }}</p>
+
+          <!-- STATUS -->
           <p>
-            <strong>{{ t('bookings.columns.status') }}:</strong>
+            <strong>Status:</strong>
             <select
               v-model="booking.status"
-              @change="updateBookingStatus(booking)"
               class="status-select"
+              :disabled="booking.status === 'COMPLETED'"
+              @change="updateBookingStatus(booking)"
             >
-              <option value="pending">{{ t('bookings.statusOptions.pending') }}</option>
-              <option value="confirmed">{{ t('bookings.statusOptions.confirmed') }}</option>
-              <option value="completed">{{ t('bookings.statusOptions.completed') }}</option>
-              <option value="cancelled">{{ t('bookings.statusOptions.cancelled') }}</option>
+              <option value="PENDING">Pending</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="REJECTED">Rejected</option>
             </select>
           </p>
+
+          <!-- PAYMENT -->
+          <p>
+            <strong>Payment:</strong>
+            <span class="badge">{{ booking.paymentStatus }}</span>
+          </p>
+
           <div class="actions">
-            <button @click="openBookingDetails(booking)" class="details-btn">
-              {{ t('bookings.actions.details') }}
+            <button
+              class="details-btn"
+              @click="openBookingDetails(booking)"
+            >
+              View Details
             </button>
           </div>
         </div>
@@ -39,54 +58,63 @@
 
     <!-- No Bookings -->
     <div v-else-if="!loading && !bookings.length" class="no-data">
-      {{ t('bookings.noBookings') }}
+      No bookings found
     </div>
 
-    <!-- Booking Details Modal -->
+    <!-- DETAILS MODAL -->
     <div v-if="selectedBooking" class="modal-overlay">
       <div class="modal">
         <h2>{{ selectedBooking.propertyName }}</h2>
+
         <div class="details-section">
-          <p><strong>{{ t('bookings.columns.customer') }}:</strong> {{ selectedBooking.customerName }}</p>
-          <p><strong>{{ t('bookings.columns.email') }}:</strong> {{ selectedBooking.customerEmail }}</p>
-          <p><strong>{{ t('bookings.columns.phone') }}:</strong> {{ selectedBooking.customerPhone || '—' }}</p>
+          <p><strong>Customer:</strong> {{ selectedBooking.customerName }}</p>
+          <p><strong>Email:</strong> {{ selectedBooking.customerEmail }}</p>
+          <p><strong>Phone:</strong> {{ selectedBooking.customerPhone }}</p>
           <p>
-            <strong>{{ t('bookings.columns.dates') }}:</strong>
-            {{ formatDate(selectedBooking.startDate) }} → {{ formatDate(selectedBooking.endDate) }}
+            <strong>Dates:</strong>
+            {{ formatDate(selectedBooking.startDate) }}
+            →
+            {{ formatDate(selectedBooking.endDate) }}
           </p>
-          <p><strong>{{ t('bookings.columns.status') }}:</strong> {{ selectedBooking.status }}</p>
-          <p><strong>{{ t('bookings.columns.totalPrice') }}:</strong> {{ selectedBooking.totalPrice }}</p>
-          <p><strong>{{ t('bookings.columns.numberOfProperties') }}:</strong> {{ selectedBooking.numberOfProperty }}</p>
+          <p><strong>Status:</strong> {{ selectedBooking.status }}</p>
+          <p><strong>Payment:</strong> {{ selectedBooking.paymentStatus }}</p>
+          <p><strong>Total Price:</strong> {{ selectedBooking.totalPrice }}</p>
+          <p>
+            <strong>Quantity:</strong>
+            {{ selectedBooking.numberOfProperty }}
+          </p>
         </div>
 
         <!-- Payment Proof -->
         <div class="payment-proof">
-          <h3>{{ t('bookings.columns.paymentProof') }}</h3>
+          <h3>Payment Proof</h3>
           <img
             v-if="selectedBooking.paymentProofPath"
             :src="getImageUrl(selectedBooking.paymentProofPath)"
-            alt="Payment Proof"
             class="modal-img"
           />
-          <p v-else class="text-gray-400 italic">{{ t('bookings.noPaymentProof') }}</p>
+          <p v-else class="text-gray">No payment proof uploaded</p>
         </div>
 
         <div class="modal-actions">
           <button
-            @click="deleteBooking(selectedBooking.bookingId); selectedBooking = null"
             class="delete-btn"
+            @click="deleteBooking(selectedBooking.bookingId)"
           >
-            {{ t('bookings.actions.delete') }}
+            Delete Booking
           </button>
-          <button @click="selectedBooking = null" class="close-btn">
-            {{ t('bookings.actions.close') }}
+
+          <button
+            class="close-btn"
+            @click="selectedBooking = null"
+          >
+            Close
           </button>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -94,58 +122,98 @@ import axios from 'axios'
 
 const { t } = useI18n()
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://lmgtech-4.onrender.com/merchant'
-const CLOUD_BASE_URL = import.meta.env.VITE_CLOUD_URL || 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload'
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  'https://lmgtech-4.onrender.com/merchant'
+
+const CLOUD_BASE_URL =
+  import.meta.env.VITE_CLOUD_URL ||
+  'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload'
+
 const token = localStorage.getItem('merchantToken')
 
 const bookings = ref([])
 const loading = ref(true)
 const selectedBooking = ref(null)
 
+/* ---------------- HELPERS ---------------- */
+
 const getImageUrl = (url) => {
-  if (!url) return 'https://via.placeholder.com/400x250.png?text=No+Image'
-  return url.startsWith('http') ? url : `${CLOUD_BASE_URL}/${url.replace(/\\/g, '/')}`
+  if (!url) return ''
+  return url.startsWith('http')
+    ? url
+    : `${CLOUD_BASE_URL}/${url.replace(/\\/g, '/')}`
 }
+
+const formatDate = (date) =>
+  date ? new Date(date).toLocaleDateString() : '—'
+
+/* ---------------- API ---------------- */
 
 const fetchBookings = async () => {
   loading.value = true
   try {
-    const res = await axios.get(`${API_BASE_URL}/operations/bookings`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const res = await axios.get(
+      `${API_BASE_URL}/operations/bookings`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
     bookings.value = res.data.bookings || []
   } catch (err) {
-    console.error('Error fetching bookings:', err.response?.data || err.message)
+    console.error(err.response?.data || err.message)
   } finally {
     loading.value = false
+  }
+}
+
+const updateBookingStatus = async (booking) => {
+  const oldStatus = booking.status
+
+  try {
+    await axios.patch(
+      `${API_BASE_URL}/operations/bookings/${booking.bookingId}/status`,
+      { status: booking.status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+  } catch (err) {
+    booking.status = oldStatus
+    alert('Failed to update booking status')
+  }
+}
+
+const deleteBooking = async (id) => {
+  if (!confirm('Delete this booking?')) return
+
+  try {
+    await axios.delete(
+      `${API_BASE_URL}/operations/bookings/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    bookings.value = bookings.value.filter(
+      (b) => b.bookingId !== id
+    )
+    selectedBooking.value = null
+  } catch (err) {
+    alert('Failed to delete booking')
   }
 }
 
 const openBookingDetails = (booking) => {
   selectedBooking.value = booking
 }
-
-const updateBookingStatus = async (booking) => {
-  try {
-    await axios.patch(`${API_BASE_URL}/operations/bookings/${booking.bookingId}/status`, {
-      status: booking.status,
-    }, { headers: { Authorization: `Bearer ${token}` } })
-  } catch (err) {
-    console.error('Failed to update status:', err.response?.data || err.message)
-  }
-}
-
-const deleteBooking = async (id) => {
-  if (!confirm(t('bookings.actions.deleteConfirm'))) return
-  try {
-    await axios.delete(`${API_BASE_URL}/operations/bookings/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-    bookings.value = bookings.value.filter(b => b.bookingId !== id)
-  } catch (err) {
-    console.error('Failed to delete booking:', err.response?.data || err.message)
-  }
-}
-
-const formatDate = (date) => date ? new Date(date).toLocaleDateString() : '—'
 
 onMounted(fetchBookings)
 </script>
