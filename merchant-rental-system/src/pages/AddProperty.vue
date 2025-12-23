@@ -49,7 +49,7 @@
               v-model="form.customCategory"
               type="text"
               class="form-input"
-              placeholder="e.g. Office Equipment"
+              placeholder="input category name"
               required
             />
           </div>

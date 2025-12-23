@@ -21,7 +21,7 @@
           <p><strong>Customer:</strong> {{ booking.customerName }}</p>
           <p><strong>Total Price:</strong> {{ booking.totalPrice }}</p>
 
-          <!-- STATUS -->
+          <!-- BOOKING STATUS -->
           <p>
             <strong>Status:</strong>
             <select
@@ -38,17 +38,24 @@
             </select>
           </p>
 
-          <!-- PAYMENT -->
+          <!-- PAYMENT STATUS ✅ -->
           <p>
-            <strong>Payment:</strong>
-            <span class="badge">{{ booking.paymentStatus }}</span>
+      <select
+  v-model="booking.paymentStatus"
+  class="status-select"
+  :disabled="booking.paymentStatus === 'PAID'"
+  @change="updatePaymentStatus(booking)"
+>
+  <option value="UNPAID">Unpaid</option>
+  <option value="PENDING_REVIEW">Pending Review</option>
+  <option value="PAID">Paid</option>
+  <option value="EXPIRED">Expired</option>
+</select>
+
           </p>
 
           <div class="actions">
-            <button
-              class="details-btn"
-              @click="openBookingDetails(booking)"
-            >
+            <button class="details-btn" @click="openBookingDetails(booking)">
               View Details
             </button>
           </div>
@@ -70,19 +77,33 @@
           <p><strong>Customer:</strong> {{ selectedBooking.customerName }}</p>
           <p><strong>Email:</strong> {{ selectedBooking.customerEmail }}</p>
           <p><strong>Phone:</strong> {{ selectedBooking.customerPhone }}</p>
+
           <p>
             <strong>Dates:</strong>
-            {{ formatDate(selectedBooking.startDate) }}
-            →
+            {{ formatDate(selectedBooking.startDate) }} →
             {{ formatDate(selectedBooking.endDate) }}
           </p>
+
           <p><strong>Status:</strong> {{ selectedBooking.status }}</p>
-          <p><strong>Payment:</strong> {{ selectedBooking.paymentStatus }}</p>
-          <p><strong>Total Price:</strong> {{ selectedBooking.totalPrice }}</p>
+
+          <!-- PAYMENT STATUS (MODAL) ✅ -->
           <p>
-            <strong>Quantity:</strong>
-            {{ selectedBooking.numberOfProperty }}
+            <strong>Payment:</strong>
+            <select
+              v-model="selectedBooking.paymentStatus"
+              class="status-select"
+              :disabled="selectedBooking.paymentStatus === 'PAID'"
+              @change="updatePaymentStatus(selectedBooking)"
+            >
+              <option value="UNPAID">Unpaid</option>
+              <option value="PENDING">Pending</option>
+              <option value="PAID">Paid</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
           </p>
+
+          <p><strong>Total Price:</strong> {{ selectedBooking.totalPrice }}</p>
+          <p><strong>Quantity:</strong> {{ selectedBooking.numberOfProperty }}</p>
         </div>
 
         <!-- Payment Proof -->
@@ -104,10 +125,7 @@
             Delete Booking
           </button>
 
-          <button
-            class="close-btn"
-            @click="selectedBooking = null"
-          >
+          <button class="close-btn" @click="selectedBooking = null">
             Close
           </button>
         </div>
@@ -115,6 +133,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -156,12 +175,9 @@ const fetchBookings = async () => {
     const res = await axios.get(
       `${API_BASE_URL}/operations/bookings`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     )
-
     bookings.value = res.data.bookings || []
   } catch (err) {
     console.error(err.response?.data || err.message)
@@ -172,16 +188,11 @@ const fetchBookings = async () => {
 
 const updateBookingStatus = async (booking) => {
   const oldStatus = booking.status
-
   try {
     await axios.patch(
       `${API_BASE_URL}/operations/bookings/${booking.bookingId}/status`,
       { status: booking.status },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     )
   } catch (err) {
     booking.status = oldStatus
@@ -189,22 +200,30 @@ const updateBookingStatus = async (booking) => {
   }
 }
 
+/* ✅ PAYMENT STATUS UPDATE */
+const updatePaymentStatus = async (booking) => {
+  const oldStatus = booking.paymentStatus
+  try {
+    await axios.patch(
+      `${API_BASE_URL}/operations/bookings/${booking.bookingId}/status`, // ✅ same endpoint as booking status
+      { paymentStatus: booking.paymentStatus }, // send paymentStatus in body
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+  } catch (err) {
+    booking.paymentStatus = oldStatus
+    alert('Failed to update payment status')
+    console.error(err.response?.data || err.message)
+  }
+}
+
 const deleteBooking = async (id) => {
   if (!confirm('Delete this booking?')) return
-
   try {
     await axios.delete(
       `${API_BASE_URL}/operations/bookings/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     )
-
-    bookings.value = bookings.value.filter(
-      (b) => b.bookingId !== id
-    )
+    bookings.value = bookings.value.filter(b => b.bookingId !== id)
     selectedBooking.value = null
   } catch (err) {
     alert('Failed to delete booking')
@@ -217,7 +236,6 @@ const openBookingDetails = (booking) => {
 
 onMounted(fetchBookings)
 </script>
-
 <style scoped>
 .booking-list-page {
   padding: 2rem;
