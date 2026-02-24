@@ -71,9 +71,9 @@ function onThemeChange() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #1e40af;
-  color: white;
-  padding: 0.6rem 1rem;
+  background-color: white;;
+  color: rgb(26, 2, 2);
+  padding: 0.16rem 0.5rem;
   padding-right: 2rem; /* NEW: prevent button from touching screen edge */
   font-family: 'Segoe UI', sans-serif;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -88,7 +88,7 @@ function onThemeChange() {
   font-size: 1.5rem;
   background: none;
   border: none;
-  color: white;
+  color: rgb(27, 23, 23);
   cursor: pointer;
 }
 
@@ -108,8 +108,8 @@ function onThemeChange() {
 }
 
 .dropdown-btn {
-  background: #717376;
-  color: white;
+  background: #e8e9eb;
+  color: rgb(27, 24, 24);
   padding: 0.35rem 0.7rem;
   border-radius: 50%;
   font-size: 1.3rem;
@@ -163,7 +163,7 @@ function onThemeChange() {
 
 .logout-btn {
   width: 100%;
-  background-color: #10b981;
+  background-color: #b91010;
   border: none;
   color: white;
   padding: 0.45rem;
