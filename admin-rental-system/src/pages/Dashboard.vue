@@ -1,70 +1,161 @@
 <template>
   <div class="dashboard">
-    <h2 class="title">Admin Dashboard</h2>
 
-    <!-- AI ALERT BANNER -->
+    <!-- AI ALERT -->
     <div v-if="aiAlertMessage" class="ai-alert">
       🚨 {{ aiAlertMessage }}
     </div>
 
-    <!-- MAIN TOTAL CARDS -->
+    <!-- TOTAL CARDS -->
     <div class="stats-grid">
-
       <div class="stat-card light-card"
            @click="toggleSection('merchants')">
-        <p class="stat-label">Total Merchants</p>
-        <p class="stat-value">{{ totalMerchants }}</p>
+        <p>Total Merchants</p>
+        <h3>{{ totalMerchants }}</h3>
       </div>
 
       <div class="stat-card light-card"
            @click="toggleSection('customers')">
-        <p class="stat-label">Total Customers</p>
-        <p class="stat-value">{{ totalCustomers }}</p>
+        <p>Total Customers</p>
+        <h3>{{ totalCustomers }}</h3>
       </div>
 
       <div class="stat-card light-card"
            @click="toggleSection('bookings')">
-        <p class="stat-label">Total Bookings</p>
-        <p class="stat-value">{{ totalBookings }}</p>
+        <p>Total Bookings</p>
+        <h3>{{ totalBookings }}</h3>
       </div>
-
     </div>
 
     <!-- MERCHANT DETAILS -->
     <div v-if="activeSection === 'merchants'" class="sub-grid">
-      <div class="stat-card green-card">
-        <p class="stat-label">Active Merchants</p>
-        <p class="stat-value">{{ activeMerchants }}</p>
+      <div class="stat-card green-card"
+           @click="showList('merchants','active')">
+        <p>Active Merchants</p>
+        <h3>{{ activeMerchants }}</h3>
       </div>
 
-      <div class="stat-card red-card">
-        <p class="stat-label">Suspended Merchants</p>
-        <p class="stat-value">{{ suspendedMerchants }}</p>
+      <div class="stat-card red-card"
+           @click="showList('merchants','suspended')">
+        <p>Suspended Merchants</p>
+        <h3>{{ suspendedMerchants }}</h3>
       </div>
     </div>
 
     <!-- CUSTOMER DETAILS -->
     <div v-if="activeSection === 'customers'" class="sub-grid">
-      <div class="stat-card green-card">
-        <p class="stat-label">Active Customers</p>
-        <p class="stat-value">{{ activeCustomers }}</p>
+      <div class="stat-card green-card"
+           @click="showList('customers','active')">
+        <p>Active Customers</p>
+        <h3>{{ activeCustomers }}</h3>
       </div>
 
-      <div class="stat-card red-card">
-        <p class="stat-label">Suspended Customers</p>
-        <p class="stat-value">{{ suspendedCustomers }}</p>
+      <div class="stat-card red-card"
+           @click="showList('customers','suspended')">
+        <p>Suspended Customers</p>
+        <h3>{{ suspendedCustomers }}</h3>
       </div>
     </div>
 
-    <!-- BOOKING DETAILS -->
-    <div v-if="activeSection === 'bookings'" class="sub-grid">
-      <div
-        v-for="(count, status) in bookingStatuses"
-        :key="status"
-        class="stat-card yellow-card"
-      >
-        <p class="stat-label">{{ status }}</p>
-        <p class="stat-value">{{ count }}</p>
+    <!-- BOOKINGS SECTION -->
+    <div v-if="activeSection === 'bookings'">
+
+      <div class="sub-grid">
+        <div v-for="(count, status) in bookingStatuses"
+             :key="status"
+             class="stat-card yellow-card"
+             @click="filterBookings(status)">
+          <p>{{ status.toUpperCase() }}</p>
+          <h3>{{ count }}</h3>
+        </div>
+
+        <div class="stat-card"
+             @click="resetFilter">
+          <p>ALL</p>
+          <h3>{{ totalBookings }}</h3>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <canvas id="bookingChart"></canvas>
+      </div>
+
+      <div class="booking-grid">
+        <div v-for="booking in filteredBookings"
+             :key="booking._id"
+             class="booking-card"
+             @click="openModal(booking)">
+
+          <img :src="booking.image || defaultImage"
+               class="booking-image"/>
+
+          <div class="booking-info">
+            <h4>{{ booking.customerName || 'Customer' }}</h4>
+            <p>Merchant: {{ booking.merchantName || 'Merchant' }}</p>
+            <p>Date: {{ formatDate(booking.createdAt) }}</p>
+
+            <span
+              :class="['status-badge', booking.status?.toLowerCase()]">
+              {{ booking.status }}
+            </span>
+
+            <div class="risk-score"
+                 :class="riskClass(booking.aiRiskScore)">
+              AI Risk: {{ booking.aiRiskScore || 0 }}%
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIST TABLE -->
+    <div v-if="selectedList.length > 0" class="list-section">
+      <h3>{{ listTitle }}</h3>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in selectedList"
+              :key="item._id">
+            <td>{{ item.name || item.fullName }}</td>
+            <td>{{ item.email }}</td>
+            <td>
+              <span :class="item.isActive ? 'active-badge' : 'suspended-badge'">
+                {{ item.isActive ? 'Active' : 'Suspended' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- BOOKING MODAL -->
+    <div v-if="selectedBooking"
+         class="modal-overlay"
+         @click.self="selectedBooking=null">
+
+      <div class="modal">
+        <h3>Booking Details</h3>
+
+        <img :src="selectedBooking.image || defaultImage"
+             class="modal-image"/>
+
+        <p><strong>Customer:</strong> {{ selectedBooking.customerName }}</p>
+        <p><strong>Merchant:</strong> {{ selectedBooking.merchantName }}</p>
+        <p><strong>Status:</strong> {{ selectedBooking.status }}</p>
+        <p><strong>AI Risk:</strong> {{ selectedBooking.aiRiskScore || 0 }}%</p>
+        <p><strong>Date:</strong> {{ formatDate(selectedBooking.createdAt) }}</p>
+
+        <button class="close-btn"
+                @click="selectedBooking=null">
+          Close
+        </button>
       </div>
     </div>
 
@@ -72,223 +163,550 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
-import axios from 'axios'
-import { useToast } from 'vue-toastification'
+import { ref, onMounted, onUnmounted, nextTick } from "vue"
+import axios from "axios"
+import { useToast } from "vue-toastification"
+import Chart from "chart.js/auto"
 
 export default {
-  setup() {
+setup(){
 
-    const toast = useToast()
-    const aiAlertMessage = ref(null)
+const toast = useToast()
 
-    const activeSection = ref(null)
+const aiAlertMessage = ref(null)
 
-    const totalMerchants = ref(0)
-    const activeMerchants = ref(0)
-    const suspendedMerchants = ref(0)
+const activeSection = ref(null)
+const selectedList = ref([])
+const listTitle = ref("")
+const selectedBooking = ref(null)
 
-    const totalCustomers = ref(0)
-    const activeCustomers = ref(0)
-    const suspendedCustomers = ref(0)
+const merchantsData = ref([])
+const customersData = ref([])
+const bookingsData = ref([])
+const filteredBookings = ref([])
 
-    const totalBookings = ref(0)
-    const bookingStatuses = ref({})
+const totalMerchants = ref(0)
+const activeMerchants = ref(0)
+const suspendedMerchants = ref(0)
 
-    let socket = null
+const totalCustomers = ref(0)
+const activeCustomers = ref(0)
+const suspendedCustomers = ref(0)
 
-    const toggleSection = (section) => {
-      activeSection.value =
-        activeSection.value === section ? null : section
-    }
+const totalBookings = ref(0)
+const bookingStatuses = ref({})
 
-    const fetchDashboardData = async () => {
-      try {
-        const token =
-          localStorage.getItem('adminToken') ||
-          localStorage.getItem('managerToken')
+const defaultImage =
+"https://via.placeholder.com/300x200.png?text=No+Image"
 
-        const merchantsRes = await axios.get(
-          'https://lmgtech-4.onrender.com/merchant/all',
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
+let socket = null
+let chartInstance = null
+let autoRefresh = null
 
-        const merchants = merchantsRes.data || []
-        totalMerchants.value = merchants.length
-        activeMerchants.value = merchants.filter(m => m.isActive).length
-        suspendedMerchants.value = merchants.filter(m => !m.isActive).length
+const toggleSection = (section)=>{
+activeSection.value =
+activeSection.value===section ? null : section
 
-        const customersRes = await axios.get(
-          'https://lmgtech-4.onrender.com/customer/all',
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
+selectedList.value=[]
 
-        const customers = customersRes.data?.customers || []
-        totalCustomers.value = customers.length
-        activeCustomers.value = customers.filter(c => c.isActive).length
-        suspendedCustomers.value = customers.filter(c => !c.isActive).length
+if(section==="bookings"){
+nextTick(()=>createChart())
+}
+}
 
-        const bookingsRes = await axios.get(
-          'https://lmgtech-4.onrender.com/customer/bookings/all',
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
+const showList = (type,status)=>{
 
-        const bookings = bookingsRes.data?.bookings || []
-        totalBookings.value = bookings.length
+let data = type==="merchants"
+? merchantsData.value
+: customersData.value
 
-        const statusCounts = {
-          decline: 0,
-          accepted: 0,
-          pending: 0,
-          confirmed: 0,
-          cancelled: 0
-        }
+selectedList.value =
+data.filter(item =>
+status==="active"
+? item.isActive
+: !item.isActive)
 
-        bookings.forEach(b => {
-          const status = b.status?.toLowerCase()
-          if (statusCounts.hasOwnProperty(status)) {
-            statusCounts[status]++
-          }
-        })
+listTitle.value =
+`${status.charAt(0).toUpperCase()+status.slice(1)} ${type}`
+}
 
-        bookingStatuses.value = statusCounts
+const formatDate = (date)=>
+new Date(date).toLocaleDateString()
 
-      } catch (error) {
-        console.error("Dashboard Error:", error)
-      }
-    }
+const riskClass = (score)=>{
+if(score>=70) return "high-risk"
+if(score>=40) return "medium-risk"
+return "low-risk"
+}
 
-    const connectWebSocket = () => {
-      socket = new WebSocket("ws://127.0.0.1:8001/ws/notifications")
+const filterBookings = (status)=>{
+filteredBookings.value =
+bookingsData.value.filter(
+b=>b.status?.toLowerCase()===status)
+}
 
-      socket.onopen = () => {
-        console.log("✅ WebSocket Connected")
-      }
+const resetFilter = ()=>
+filteredBookings.value = bookingsData.value
 
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data)
+const openModal = (booking)=>
+selectedBooking.value=booking
 
-        if (data.type === "ANALYTICS_UPDATE") {
-          fetchDashboardData()
-          toast.info("📊 AI Analytics Updated")
-        }
+const createChart = ()=>{
 
-        if (data.type === "FRAUD_ALERT") {
-          toast.error("⚠️ Fraud Detected!")
-          aiAlertMessage.value = "Fraud activity detected in system."
-        }
+const ctx=document.getElementById("bookingChart")
+if(!ctx) return
 
-        if (data.type === "MERCHANT_RISK_UPDATE") {
-          toast.warning("🚨 High Risk Merchant Detected!")
-          aiAlertMessage.value = "High-risk merchant identified."
-        }
-      }
+if(chartInstance) chartInstance.destroy()
 
-      socket.onerror = (error) => {
-        console.error("WebSocket Error:", error)
-      }
+chartInstance = new Chart(ctx,{
+type:"bar",
+data:{
+labels:Object.keys(bookingStatuses.value),
+datasets:[{
+label:"Bookings by Status",
+data:Object.values(bookingStatuses.value)
+}]
+}
+})
+}
 
-      socket.onclose = () => {
-        console.log("❌ WebSocket Disconnected")
-      }
-    }
+const fetchDashboardData = async()=>{
 
-    onMounted(() => {
-      fetchDashboardData()
-      connectWebSocket()
-    })
+const token =
+localStorage.getItem("adminToken") ||
+localStorage.getItem("managerToken")
 
-    onUnmounted(() => {
-      if (socket) socket.close()
-    })
+// MERCHANTS
+const merchantsRes =
+await axios.get("https://lmgtech-4.onrender.com/merchant/all",
+{ headers:{Authorization:`Bearer ${token}`}})
 
-    return {
-      activeSection,
-      toggleSection,
-      totalMerchants,
-      activeMerchants,
-      suspendedMerchants,
-      totalCustomers,
-      activeCustomers,
-      suspendedCustomers,
-      totalBookings,
-      bookingStatuses,
-      aiAlertMessage
-    }
-  }
+merchantsData.value = merchantsRes.data || []
+
+totalMerchants.value = merchantsData.value.length
+activeMerchants.value =
+merchantsData.value.filter(m=>m.isActive).length
+
+suspendedMerchants.value =
+merchantsData.value.filter(m=>!m.isActive).length
+
+// CUSTOMERS
+const customersRes =
+await axios.get("https://lmgtech-4.onrender.com/customer/all",
+{ headers:{Authorization:`Bearer ${token}`}})
+
+customersData.value =
+customersRes.data?.customers || []
+
+totalCustomers.value = customersData.value.length
+
+activeCustomers.value =
+customersData.value.filter(c=>c.isActive).length
+
+suspendedCustomers.value =
+customersData.value.filter(c=>!c.isActive).length
+
+// BOOKINGS
+const bookingsRes =
+await axios.get("https://lmgtech-4.onrender.com/customer/bookings/all",
+{ headers:{Authorization:`Bearer ${token}`}})
+
+bookingsData.value =
+bookingsRes.data?.bookings || []
+
+filteredBookings.value = bookingsData.value
+
+totalBookings.value = bookingsData.value.length
+
+const counts={}
+
+bookingsData.value.forEach(b=>{
+const s=b.status?.toLowerCase()
+counts[s]=(counts[s]||0)+1
+})
+
+bookingStatuses.value = counts
+
+nextTick(()=>createChart())
+}
+
+const connectWebSocket = ()=>{
+
+socket = new WebSocket("ws://127.0.0.1:8001/ws/notifications")
+
+socket.onmessage = (event)=>{
+
+const data = JSON.parse(event.data)
+
+if(data.type==="ANALYTICS_UPDATE"){
+
+fetchDashboardData()
+
+toast.info("📊 AI Analytics Updated")
+
+}
+
+if(data.type==="FRAUD_ALERT"){
+
+toast.error("⚠️ Fraud Detected!")
+
+aiAlertMessage.value =
+"Fraud activity detected."
+
+}
+
+}
+}
+
+const startAutoRefresh = ()=>{
+
+autoRefresh =
+setInterval(()=>{
+
+fetchDashboardData()
+
+},30000)
+
+}
+
+onMounted(()=>{
+
+fetchDashboardData()
+
+connectWebSocket()
+
+startAutoRefresh()
+
+document.addEventListener(
+"visibilitychange",
+()=>{
+if(!document.hidden){
+fetchDashboardData()
+}
+})
+
+})
+
+onUnmounted(()=>{
+
+if(socket) socket.close()
+
+if(autoRefresh) clearInterval(autoRefresh)
+
+})
+
+return{
+
+activeSection,
+toggleSection,
+showList,
+
+totalMerchants,
+activeMerchants,
+suspendedMerchants,
+
+totalCustomers,
+activeCustomers,
+suspendedCustomers,
+
+totalBookings,
+bookingStatuses,
+
+filteredBookings,
+filterBookings,
+resetFilter,
+
+selectedList,
+listTitle,
+
+formatDate,
+defaultImage,
+
+openModal,
+selectedBooking,
+
+riskClass,
+aiAlertMessage
+
+}
+
+}
 }
 </script>
-
 <style scoped>
+
+/* ===== BASE LAYOUT ===== */
 .dashboard {
-  padding: 25px;
-  background: #f9fafb;
+  padding: 24px;
+  background: #f8fafc;
   min-height: 100vh;
 }
 
 .title {
   font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 25px;
-  color: #1f2937;
+  font-weight: 700;
+  margin-bottom: 24px;
 }
 
-.stats-grid {
+/* ===== GRID SYSTEM ===== */
+.stats-grid,
+.sub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
+  margin-bottom: 24px;
 }
 
+/* ===== CARDS ===== */
 .stat-card {
+  background: #ffffff;
   border-radius: 14px;
   padding: 20px;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  transition: transform 0.2s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
   cursor: pointer;
+  transition: 0.25s ease;
+  text-align: center;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
 }
 
-.stat-label {
-  font-size: 15px;
-  color: #6b7280;
-}
+.green-card { border-left: 6px solid #22c55e; }
+.red-card { border-left: 6px solid #ef4444; }
+.yellow-card { border-left: 6px solid #f59e0b; }
+.light-card { border-left: 6px solid #3b82f6; }
 
-.stat-value {
-  font-size: 30px;
-  font-weight: bold;
-  margin-top: 8px;
-  color: #111827;
-}
-
-.sub-grid {
-  margin-top: 20px;
+/* ===== BOOKINGS GRID ===== */
+.booking-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
 }
 
-.green-card {
-  border-left: 6px solid #22c55e;
+.booking-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  transition: 0.25s ease;
+  cursor: pointer;
 }
 
-.red-card {
-  border-left: 6px solid #ef4444;
+.booking-card:hover {
+  transform: translateY(-6px);
 }
 
-.yellow-card {
-  border-left: 6px solid #f59e0b;
+.booking-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
 }
 
+.booking-info {
+  padding: 16px;
+}
+
+.booking-info h4 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+/* ===== STATUS BADGES ===== */
+.status-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.accepted { background: #dcfce7; color: #166534; }
+.pending { background: #fef9c3; color: #854d0e; }
+.decline { background: #fee2e2; color: #991b1b; }
+.cancelled { background: #e5e7eb; color: #374151; }
+.confirmed { background: #dbeafe; color: #1e40af; }
+
+/* ===== AI RISK SCORE ===== */
+.risk-score {
+  margin-top: 10px;
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.high-risk {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.medium-risk {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.low-risk {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ===== TABLE ===== */
+.list-section {
+  margin-top: 30px;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  min-width: 500px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.active-badge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 5px 12px;
+  border-radius: 12px;
+}
+
+.suspended-badge {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 5px 12px;
+  border-radius: 12px;
+}
+
+/* ===== CHART ===== */
+.chart-section {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 999;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 450px;
+  padding: 25px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.close-btn {
+  margin-top: 15px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #2563eb;
+}
+
+/* ===== AI ALERT ===== */
 .ai-alert {
   background: #fee2e2;
   color: #991b1b;
-  padding: 12px;
+  padding: 14px;
+  border-radius: 10px;
   margin-bottom: 20px;
-  border-radius: 8px;
   font-weight: 600;
 }
+
+/* ===== MOBILE OPTIMIZATION ===== */
+@media (max-width: 768px) {
+
+  .dashboard {
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .stats-grid,
+  .sub-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-image {
+    height: 180px;
+  }
+
+  .modal {
+    max-width: 95%;
+  }
+
+  .data-table {
+    min-width: 400px;
+  }
+}
+
+/* ===== SMALL MOBILE ===== */
+@media (max-width: 480px) {
+
+  .title {
+    font-size: 20px;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .booking-image {
+    height: 160px;
+  }
+
+  .modal-image {
+    height: 160px;
+  }
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 </style>
