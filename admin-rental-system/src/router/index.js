@@ -10,34 +10,38 @@ const router = createRouter({
     { path: '/', redirect: '/login' },
 
     // Public routes
+    { path: '/login', component: Login },
+    { path: '/register', component: Register },
+
+    // Protected routes
     {
-      path: '/login',
-      component: Login,
-      beforeEnter: (to, from, next) => isAuthenticated() ? next('/dashboard') : next()
-    },
-    {
-      path: '/register',
-      component: Register,
-      beforeEnter: (to, from, next) => isAuthenticated() ? next('/dashboard') : next()
+      path: '/',
+      component: () => import('@/layouts/AdminLayout.vue'),
+      children: [
+        { path: 'dashboard', component: () => import('@/pages/Dashboard.vue') },
+        { path: 'merchant-list', component: () => import('@/pages/MerchantList.vue') },
+        { path: 'customer-list', component: () => import('@/pages/CustomerList.vue') },
+        { path: 'booking-list', component: () => import('@/pages/BookingList.vue') }
+      ]
     },
 
-    // Protected admin layout
-   {
-  path: '/',
-  component: () => import('@/layouts/AdminLayout.vue'),
-  beforeEnter: (to, from, next) => isAuthenticated() ? next() : next('/login'),
-  children: [
-    { path: 'dashboard', component: () => import('@/pages/Dashboard.vue') },
-    { path: 'merchant-list', component: () => import('@/pages/MerchantList.vue') },
-    { path: 'customer-list', component: () => import('@/pages/CustomerList.vue') },
-    { path: 'booking-list', component: () => import('@/pages/BookingList.vue') },
-  ]
-}
-,
-
-    // Fallback
     { path: '/:pathMatch(.*)*', redirect: '/login' }
   ]
+})
+
+/* GLOBAL AUTH GUARD */
+
+router.beforeEach((to, from, next) => {
+
+  const token = localStorage.getItem('adminToken')
+
+  // if route requires auth and token is missing
+  if (to.path !== '/login' && to.path !== '/register' && !token) {
+    next('/login')
+  } else {
+    next()
+  }
+
 })
 
 export default router
