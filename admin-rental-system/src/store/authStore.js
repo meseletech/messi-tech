@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-
+// this is used to fetch the local nest backend
 const API_URL = 'http://localhost:3000/admin'
 
 export const useAuthStore = defineStore('auth', {

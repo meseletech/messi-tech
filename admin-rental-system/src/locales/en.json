@@ -1,6 +1,8 @@
 {
   "login": "Login",
   "register": "Register",
+  "dont_have_account": "Don't have an account?",
+  "logging_in": "Logging in...",
   "email": "Email",
   "password": "Password",
   "name": "Name",
@@ -12,7 +14,8 @@
     "activeMerchants": "Active Merchants",
     "registeredUsers": "Registered Users",
     "totalRevenue": "Total Revenue",
-    "manageMerchants": "Manage Merchants"
+    "manageMerchants": "Manage Merchants",
+    "aiAlert": "Fraud activity detected!"
   },
   "merchant": {
     "title": "Merchant Registration",
@@ -72,7 +75,8 @@
     "empty": "No customers found."
   },
   "bookingList": {
-    "title": "Booking List"
+    "title": "Booking List",
+    "aiRisk": "AI Risk"
   },
   "bookings": {
     "searchPlaceholder": "Search properties...",
@@ -86,6 +90,7 @@
     "table": {
       "property": "Property",
       "merchant": "Merchant",
+      "customer": "Customer",
       "dates": "Dates",
       "payment": "Payment",
       "status": "Status",
@@ -109,7 +114,11 @@
       "statusUpdated": "Booking status updated successfully",
       "updateFailed": "Failed to update booking",
       "deleteConfirm": "Are you sure you want to delete this booking?",
-      "deleteFailed": "Failed to delete booking"
+      "deleteFailed": "Failed to delete booking",
+      "fraudDetected": "Potential fraud detected for this booking!",
+      "highRisk": "High AI risk detected",
+      "mediumRisk": "Medium AI risk detected",
+      "lowRisk": "Low AI risk"
     }
   },
   "actions": {
