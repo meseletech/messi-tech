@@ -4,7 +4,7 @@ import asyncio
 from services.merchant_scoring import calculate_merchant_risk_from_db, retrain_merchant_model
 from services.fraud_detection import detect_fraud_from_db, retrain_fraud_model
 from services.analytics import system_analytics_from_db
-from services.scheduler.auto_retrain import auto_retrain  # ← fixed import
+from services.scheduler.auto_retrain import auto_retrain
 
 app = FastAPI(title="AI Service Dashboard")
 
@@ -13,6 +13,12 @@ app = FastAPI(title="AI Service Dashboard")
 async def start_scheduler():
     print("🚀 Starting AI auto-retraining scheduler...")
     asyncio.create_task(auto_retrain())
+
+
+# Health check
+@app.get("/")
+async def health():
+    return {"status": "AI service running"}
 
 
 # Merchant risk

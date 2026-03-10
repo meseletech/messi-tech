@@ -25,4 +25,4 @@ async def auto_retrain():
         except Exception as e:
             print("❌ Scheduler error:", e)
 
-        await asyncio.sleep(60)  # runs every 1 minute
+        await asyncio.sleep(21600)  
