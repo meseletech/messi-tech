@@ -17,7 +17,7 @@ app = FastAPI(title="AI Service Dashboard")
 # ==========================
 origins = [
     "http://localhost:5173",            # Vue dev server
-    "https://your-frontend-domain.com", # Replace with your production frontend
+    "https://messi-tech-q223.vercel.app/", # Replace with your production frontend
 ]
 
 app.add_middleware(

@@ -1,81 +1,56 @@
-import axios from "axios";
+import axios from "axios"
 
-const AI_BASE_URL = "https://messi-tech-1.onrender.com";
+// ✅ CALL BACKEND (NOT AI SERVICE DIRECTLY)
+const AI_BASE_URL = "https://lmgtech-4.onrender.com/admin/ai"
 
-// Get token from localStorage if your AI service requires authentication
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("adminToken") || localStorage.getItem("managerToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+  const token = localStorage.getItem("adminToken") || localStorage.getItem("managerToken")
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 
 // ============================
 // AI Analytics
 // ============================
 export const getAIAnalytics = async () => {
-  try {
-    const response = await axios.get(`${AI_BASE_URL}/analytics`, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error("AI Analytics Error:", error);
-    throw error;
-  }
-};
+  const res = await axios.get(`${AI_BASE_URL}/analytics`, {
+    headers: getAuthHeaders(),
+  })
+  return res.data
+}
 
 // ============================
 // Fraud Detection
 // ============================
 export const getFraudDetection = async () => {
-  try {
-    const response = await axios.get(`${AI_BASE_URL}/fraud-detection`, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Fraud Detection Error:", error);
-    throw error;
-  }
-};
+  const res = await axios.get(`${AI_BASE_URL}/fraud-detection`, {
+    headers: getAuthHeaders(),
+  })
+  return res.data
+}
 
 // ============================
 // Merchant Risk
 // ============================
 export const getMerchantRisk = async () => {
-  try {
-    const response = await axios.get(`${AI_BASE_URL}/merchant-risk`, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Merchant Risk Error:", error);
-    throw error;
-  }
-};
+  const res = await axios.get(`${AI_BASE_URL}/merchant-risk`, {
+    headers: getAuthHeaders(),
+  })
+  return res.data
+}
 
 // ============================
 // Retrain Models
 // ============================
 export const retrainFraudModel = async () => {
-  try {
-    const response = await axios.post(`${AI_BASE_URL}/retrain/fraud`, {}, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Retrain Fraud Model Error:", error);
-    throw error;
-  }
-};
+  const res = await axios.post(`${AI_BASE_URL}/retrain-fraud`, {}, {
+    headers: getAuthHeaders(),
+  })
+  return res.data
+}
 
 export const retrainMerchantModel = async () => {
-  try {
-    const response = await axios.post(`${AI_BASE_URL}/retrain/merchant`, {}, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Retrain Merchant Model Error:", error);
-    throw error;
-  }
-};
+  const res = await axios.post(`${AI_BASE_URL}/retrain-merchant`, {}, {
+    headers: getAuthHeaders(),
+  })
+  return res.data
+}

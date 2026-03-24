@@ -25,7 +25,7 @@
       </div>
     </div>
 
-    <!-- MERCHANT DETAILS -->
+    <!-- MERCHANTS SECTION -->
     <div v-if="activeSection === 'merchants'" class="sub-grid">
       <div class="stat-card green-card" @click="showList('merchants','active')">
         <p>Active Merchants</p>
@@ -37,7 +37,7 @@
       </div>
     </div>
 
-    <!-- CUSTOMER DETAILS -->
+    <!-- CUSTOMERS SECTION -->
     <div v-if="activeSection === 'customers'" class="sub-grid">
       <div class="stat-card green-card" @click="showList('customers','active')">
         <p>Active Customers</p>
@@ -62,10 +62,12 @@
         </div>
       </div>
 
+      <!-- Chart -->
       <div class="chart-section">
         <canvas id="bookingChart"></canvas>
       </div>
 
+      <!-- Booking Cards -->
       <div class="booking-grid">
         <div v-for="booking in filteredBookings" :key="booking._id" class="booking-card" @click="openModal(booking)">
           <img :src="booking.image || defaultImage" class="booking-image"/>
@@ -73,9 +75,7 @@
             <h4>{{ booking.customerName || 'Customer' }}</h4>
             <p>Merchant: {{ booking.merchantName || 'Merchant' }}</p>
             <p>Date: {{ formatDate(booking.createdAt) }}</p>
-            <span :class="['status-badge', booking.status?.toLowerCase()]">
-              {{ booking.status }}
-            </span>
+            <span :class="['status-badge', booking.status?.toLowerCase()]">{{ booking.status }}</span>
             <div class="risk-score" :class="riskClass(booking.aiRiskScore)">
               AI Risk: {{ booking.aiRiskScore || 0 }}%
             </div>
@@ -85,7 +85,7 @@
     </div>
 
     <!-- LIST TABLE -->
-    <div v-if="selectedList.length > 0" class="list-section">
+    <div v-if="selectedList.length" class="list-section">
       <h3>{{ listTitle }}</h3>
       <table class="data-table">
         <thead>
@@ -110,7 +110,7 @@
     </div>
 
     <!-- BOOKING MODAL -->
-    <div v-if="selectedBooking" class="modal-overlay" @click.self="selectedBooking=null">
+    <div v-if="selectedBooking" class="modal-overlay" @click.self="selectedBooking = null">
       <div class="modal">
         <h3>Booking Details</h3>
         <img :src="selectedBooking.image || defaultImage" class="modal-image"/>
@@ -119,150 +119,147 @@
         <p><strong>Status:</strong> {{ selectedBooking.status }}</p>
         <p><strong>AI Risk:</strong> {{ selectedBooking.aiRiskScore || 0 }}%</p>
         <p><strong>Date:</strong> {{ formatDate(selectedBooking.createdAt) }}</p>
-        <button class="close-btn" @click="selectedBooking=null"> Close </button>
+        <button class="close-btn" @click="selectedBooking = null"> Close </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, nextTick } from "vue"
-import Chart from "chart.js/auto"
-import { 
-  getAIAnalytics, 
-  getFraudDetection, 
-  getMerchantRisk 
-} from "@/services/aiService"
-
-import axios from "axios"
+import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
+import Chart from "chart.js/auto";
+import { getAIAnalytics, getFraudDetection, getMerchantRisk } from "@/services/aiService";
+import axios from "axios";
 
 export default {
-  setup(){
-    const activeSection = ref(null)
-    const selectedList = ref([])
-    const listTitle = ref("")
-    const selectedBooking = ref(null)
-    const merchantsData = ref([])
-    const customersData = ref([])
-    const bookingsData = ref([])
-    const filteredBookings = ref([])
-    const totalMerchants = ref(0)
-    const activeMerchants = ref(0)
-    const suspendedMerchants = ref(0)
-    const totalCustomers = ref(0)
-    const activeCustomers = ref(0)
-    const suspendedCustomers = ref(0)
-    const totalBookings = ref(0)
-    const bookingStatuses = ref({})
-    const defaultImage = "https://via.placeholder.com/300x200.png?text=No+Image"
-    const aiAlertMessage = ref(null)
-    const aiRiskAvg = ref(0)
-    let chartInstance = null
+  setup() {
+    const activeSection = ref(null);
+    const selectedList = ref([]);
+    const listTitle = ref("");
+    const selectedBooking = ref(null);
+    const merchantsData = ref([]);
+    const customersData = ref([]);
+    const bookingsData = ref([]);
+    const filteredBookings = ref([]);
+    const totalMerchants = ref(0);
+    const activeMerchants = ref(0);
+    const suspendedMerchants = ref(0);
+    const totalCustomers = ref(0);
+    const activeCustomers = ref(0);
+    const suspendedCustomers = ref(0);
+    const totalBookings = ref(0);
+    const bookingStatuses = ref({});
+    const aiRiskAvg = ref(0);
+    const aiAlertMessage = ref(null);
+    const defaultImage = "https://via.placeholder.com/300x200.png?text=No+Image";
+    const chartInstance = ref(null);
 
-    const toggleSection = (section)=>{
-      activeSection.value = activeSection.value===section ? null : section
-      selectedList.value=[]
-      if(section==="bookings"){ nextTick(()=>createChart()) }
-    }
+    const toggleSection = (section) => {
+      activeSection.value = activeSection.value === section ? null : section;
+      selectedList.value = [];
+      if(section === "bookings") nextTick(() => createChart());
+    };
 
-    const showList = (type,status)=>{
-      let data = type==="merchants" ? merchantsData.value : customersData.value
-      selectedList.value = data.filter(item => status==="active" ? item.isActive : !item.isActive)
-      listTitle.value = `${status.charAt(0).toUpperCase()+status.slice(1)} ${type}`
-    }
+    const showList = (type, status) => {
+      let data = type === "merchants" ? merchantsData.value : customersData.value;
+      selectedList.value = data.filter(item => status === "active" ? item.isActive : !item.isActive);
+      listTitle.value = `${status.charAt(0).toUpperCase() + status.slice(1)} ${type}`;
+    };
 
-    const formatDate = (date)=> new Date(date).toLocaleDateString()
+    const formatDate = (date) => new Date(date).toLocaleDateString();
+    const filterBookings = (status) => { filteredBookings.value = bookingsData.value.filter(b => b.status?.toLowerCase() === status); };
+    const resetFilter = () => { filteredBookings.value = bookingsData.value; };
+    const openModal = (booking) => { selectedBooking.value = booking; };
+    const riskClass = (score) => score >= 70 ? "high-risk" : score >= 40 ? "medium-risk" : "low-risk";
 
-    const filterBookings = (status)=>{ filteredBookings.value = bookingsData.value.filter( b=>b.status?.toLowerCase()===status) }
-    const resetFilter = ()=> filteredBookings.value = bookingsData.value
-    const openModal = (booking)=> selectedBooking.value=booking
+    const createChart = () => {
+      nextTick(() => {
+        const ctx = document.getElementById("bookingChart");
+        if (!ctx) return;
+        if (chartInstance.value) chartInstance.value.destroy();
+        chartInstance.value = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: Object.keys(bookingStatuses.value),
+            datasets: [{ label: "Bookings by Status", data: Object.values(bookingStatuses.value) }]
+          },
+        });
+      });
+    };
 
-    const riskClass = (score)=>{
-      if(score>=70) return "high-risk"
-      if(score>=40) return "medium-risk"
-      return "low-risk"
-    }
+    const fetchAIMetrics = async () => {
+      try {
+        const analytics = await getAIAnalytics();
+        const fraud = await getFraudDetection();
+        const risk = await getMerchantRisk();
 
-    const createChart = ()=>{
-      const ctx=document.getElementById("bookingChart")
-      if(!ctx) return
-      if(chartInstance) chartInstance.destroy()
-      chartInstance = new Chart(ctx,{
-        type:"bar",
-        data:{
-          labels:Object.keys(bookingStatuses.value),
-          datasets:[{ label:"Bookings by Status", data:Object.values(bookingStatuses.value) }]
+        // Merge AI risk
+        if (analytics?.bookings?.length) {
+          const map = {};
+          bookingsData.value.forEach(b => map[b._id] = b);
+          analytics.bookings.forEach(a => { if(map[a._id]) map[a._id].aiRiskScore = a.aiRiskScore || 0; });
         }
-      })
-    }
 
-    const fetchDashboardData = async()=>{
-      const token = localStorage.getItem("adminToken") || localStorage.getItem("managerToken")
-
-      // MERCHANTS
-      const merchantsRes = await axios.get("https://lmgtech-4.onrender.com/merchant/all", { headers:{Authorization:`Bearer ${token}`}})
-      merchantsData.value = merchantsRes.data || []
-      totalMerchants.value = merchantsData.value.length
-      activeMerchants.value = merchantsData.value.filter(m=>m.isActive).length
-      suspendedMerchants.value = merchantsData.value.filter(m=>!m.isActive).length
-
-      // CUSTOMERS
-      const customersRes = await axios.get("https://lmgtech-4.onrender.com/customer/all", { headers:{Authorization:`Bearer ${token}`}})
-      customersData.value = customersRes.data?.customers || []
-      totalCustomers.value = customersData.value.length
-      activeCustomers.value = customersData.value.filter(c=>c.isActive).length
-      suspendedCustomers.value = customersData.value.filter(c=>!c.isActive).length
-
-      // BOOKINGS
-      const bookingsRes = await axios.get("https://lmgtech-4.onrender.com/customer/bookings/all", { headers:{Authorization:`Bearer ${token}`}})
-      bookingsData.value = bookingsRes.data?.bookings || []
-      filteredBookings.value = bookingsData.value
-      totalBookings.value = bookingsData.value.length
-      const counts={}
-      bookingsData.value.forEach(b=>{
-        const s=b.status?.toLowerCase()
-        counts[s]=(counts[s]||0)+1
-      })
-      bookingStatuses.value = counts
-      nextTick(()=>createChart())
-
-      // AI SERVICE METRICS
-      fetchAIMetrics()
-    }
-
-    const fetchAIMetrics = async()=>{
-      try{
-        const analytics = await getAIAnalytics()
-        const fraud = await getFraudDetection()
-        const risk = await getMerchantRisk()
-
-        // Example: avg AI risk score from analytics
-        const risks = analytics?.bookings?.map(b=>b.aiRiskScore || 0) || []
-        aiRiskAvg.value = risks.length ? Math.round(risks.reduce((a,b)=>a+b,0)/risks.length) : 0
+        // Average risk
+        const risks = analytics?.bookings?.map(b => b.aiRiskScore || 0) || [];
+        aiRiskAvg.value = risks.length ? Math.round(risks.reduce((a,b)=>a+b,0)/risks.length) : 0;
 
         // Fraud alerts
-        const fraudAlerts = fraud?.alerts || []
-        if(fraudAlerts.length) aiAlertMessage.value = `Fraud detected: ${fraudAlerts.length} alerts!`
-      }catch(err){
-        console.error("AI Service Error:", err)
-        aiAlertMessage.value = "Failed to fetch AI metrics."
+        const alerts = fraud?.alerts || [];
+        aiAlertMessage.value = alerts.length ? `⚠️ Fraud detected: ${alerts.length} alerts!` : null;
+
+        createChart();
+      } catch(err) {
+        console.error(err);
+        aiAlertMessage.value = "Failed to fetch AI metrics.";
       }
-    }
+    };
 
-    onMounted(()=>{ fetchDashboardData() })
-    onUnmounted(()=>{ if(chartInstance) chartInstance.destroy() })
+    const fetchDashboardData = async () => {
+      const token = localStorage.getItem("adminToken") || localStorage.getItem("managerToken");
+      if (!token) return alert("No token found! Please login.");
 
-    return{
+      // MERCHANTS
+      const merchantsRes = await axios.get("https://lmgtech-4.onrender.com/merchant/all", { headers: { Authorization: `Bearer ${token}` }});
+      merchantsData.value = merchantsRes.data || [];
+      totalMerchants.value = merchantsData.value.length;
+      activeMerchants.value = merchantsData.value.filter(m=>m.isActive).length;
+      suspendedMerchants.value = merchantsData.value.filter(m=>!m.isActive).length;
+
+      // CUSTOMERS
+      const customersRes = await axios.get("https://lmgtech-4.onrender.com/customer/all", { headers: { Authorization: `Bearer ${token}` }});
+      customersData.value = customersRes.data?.customers || [];
+      totalCustomers.value = customersData.value.length;
+      activeCustomers.value = customersData.value.filter(c=>c.isActive).length;
+      suspendedCustomers.value = customersData.value.filter(c=>!c.isActive).length;
+
+      // BOOKINGS
+      const bookingsRes = await axios.get("https://lmgtech-4.onrender.com/customer/bookings/all", { headers: { Authorization: `Bearer ${token}` }});
+      bookingsData.value = bookingsRes.data?.bookings || [];
+      filteredBookings.value = bookingsData.value;
+      totalBookings.value = bookingsData.value.length;
+
+      // Booking statuses
+      const counts = {};
+      bookingsData.value.forEach(b => { const s = b.status?.toLowerCase() || "unknown"; counts[s] = (counts[s]||0)+1; });
+      bookingStatuses.value = counts;
+
+      await fetchAIMetrics();
+      createChart();
+    };
+
+    onMounted(() => fetchDashboardData());
+    onUnmounted(() => { if(chartInstance.value) chartInstance.value.destroy(); });
+
+    return {
       activeSection, toggleSection, showList, totalMerchants, activeMerchants, suspendedMerchants,
       totalCustomers, activeCustomers, suspendedCustomers, totalBookings, bookingStatuses,
       filteredBookings, filterBookings, resetFilter, selectedList, listTitle, formatDate,
       defaultImage, openModal, selectedBooking, aiAlertMessage, aiRiskAvg, fetchAIMetrics, riskClass
-    }
+    };
   }
-}
+};
 </script>
-
-
 <style scoped>
 /* ===== BASE LAYOUT ===== */
 .dashboard { padding: 24px; background: #f8fafc; min-height: 100vh; }

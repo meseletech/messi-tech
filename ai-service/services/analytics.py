@@ -15,13 +15,6 @@ async def system_analytics_from_db():
     total_merchants = await users_collection.count_documents({"role": "merchant"})
     total_bookings = await bookings_collection.count_documents({})
 
-    revenue_cursor = bookings_collection.aggregate([
-        {"$match": {"status": "CONFIRMED"}},
-        {"$group": {"_id": None, "totalRevenue": {"$sum": "$amount"}}}
-    ])
-    revenue_data = await revenue_cursor.to_list(length=1)
-    total_revenue = revenue_data[0]["totalRevenue"] if revenue_data else 0
-
     peak_cursor = bookings_collection.aggregate([
         {"$group": {"_id": {"$hour": "$createdAt"}, "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
