@@ -14,7 +14,6 @@ async def system_analytics_from_db():
     total_customers = await users_collection.count_documents({"role": "customer"})
     total_merchants = await users_collection.count_documents({"role": "merchant"})
     total_bookings = await bookings_collection.count_documents({})
-
     peak_cursor = bookings_collection.aggregate([
         {"$group": {"_id": {"$hour": "$createdAt"}, "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
@@ -27,7 +26,6 @@ async def system_analytics_from_db():
         "totalCustomers": total_customers,
         "totalMerchants": total_merchants,
         "totalBookings": total_bookings,
-        "totalRevenue": total_revenue,
         "peakBookingHour": peak_hour
     }
 
