@@ -1,13 +1,16 @@
 <template>
-  <div class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+  <div class="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-      <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-        🏢 {{ t('merchantList.title') }}
-      </h2>
+      <div>
+        <p class="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 mb-1">{{ t('merchantList.subtitle') }}</p>
+        <h2 class="text-3xl font-semibold text-slate-900 dark:text-slate-100">
+          {{ t('merchantList.title') }}
+        </h2>
+      </div>
       <button
         @click="fetchMerchants"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-sm text-sm transition"
+        class="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-sky-700"
       >
         {{ t('actions.refresh') }}
       </button>
@@ -29,25 +32,25 @@
     </div>
 
     <!-- Merchant Table -->
-    <div v-else class="overflow-x-auto">
-      <table class="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-left shadow-sm overflow-hidden">
-        <thead class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+    <div v-else class="overflow-x-auto rounded-xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+      <table class="min-w-full text-sm text-left">
+        <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
           <tr>
-            <th class="px-4 py-2">#</th>
-            <th class="px-4 py-2">{{ t('merchantList.name') }}</th>
-            <th class="px-4 py-2">{{ t('merchantList.email') }}</th>
-            <th class="px-4 py-2">{{ t('merchantList.phone') }}</th>
-            <th class="px-4 py-2">{{ t('merchantList.businessName') }}</th>
-            <th class="px-4 py-2">{{ t('merchantList.address') }}</th>
-            <th class="px-4 py-2">{{ t('merchantList.status') }}</th>
-            <th class="px-4 py-2 text-center">{{ t('actions.actions') }}</th>
+            <th class="px-5 py-4 font-medium">#</th>
+            <th class="px-5 py-4 font-medium">{{ t('merchantList.name') }}</th>
+            <th class="px-5 py-4 font-medium">{{ t('merchantList.email') }}</th>
+            <th class="px-5 py-4 font-medium">{{ t('merchantList.phone') }}</th>
+            <th class="px-5 py-4 font-medium">{{ t('merchantList.businessName') }}</th>
+            <th class="px-5 py-4 font-medium">{{ t('merchantList.address') }}</th>
+            <th class="px-5 py-4 font-medium">{{ t('merchantList.status') }}</th>
+            <th class="px-5 py-4 font-medium text-center">{{ t('actions.actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="(merchant, index) in filteredMerchants"
             :key="merchant._id"
-            class="hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+            class="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
             <td class="px-4 py-2">{{ index + 1 }}</td>
             <td class="px-4 py-2">{{ merchant.fullName }}</td>
@@ -102,8 +105,8 @@
     </div>
 
     <!-- Add Merchant Button -->
-    <div class="mt-6 text-center">
-      <button @click="openAddModal" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow-sm transition">
+    <div class="mt-6 text-right">
+      <button @click="openAddModal" class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition duration-200 hover:bg-slate-800">
         + {{ t('merchant.add') }}
       </button>
     </div>
@@ -353,61 +356,94 @@ onMounted(fetchMerchants)
 /* Form Inputs */
 .form-input {
   width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background-color: white;
-  color: #111827;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #ffffff;
+  color: #0f172a;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dark .form-input {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-color: #334155;
 }
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18);
 }
 
 /* Add Merchant Button */
-.mt-6.text-center > button {
-  background: linear-gradient(90deg, #10b981, #059669);
+.mt-6.text-right > button {
+  background-color: #0f172a;
   color: white;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: all 0.2s ease-in-out;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
-.mt-6.text-center > button:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+.mt-6.text-right > button:hover {
+  transform: translateY(-1px);
+  background-color: #111827;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
 }
 
 /* Merchant Table */
 table {
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 0.5rem;
-  overflow: hidden;
   width: 100%;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-thead { background-color: #608add; }
-thead th { padding: 0.75rem 1rem; font-weight: 600; text-align: left; color: #374151; }
-tbody td { padding: 0.5rem 0.75rem; color: #4b5563; border-bottom: 1px solid #e5e7eb; }
-tbody tr:hover { background-color: #70a8e0; }
+thead {
+  background-color: #f8fafc;
+}
+thead th {
+  padding: 1rem 1.25rem;
+  font-weight: 700;
+  text-align: left;
+  color: #111827;
+}
+.dark thead {
+  background-color: #111827;
+}
+.dark thead th {
+  color: #e2e8f0;
+}
+tbody td {
+  padding: 0.85rem 1.25rem;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+}
+.dark tbody td {
+  color: #cbd5e1;
+  border-bottom-color: #334155;
+}
 
 /* Status Badges */
 td span {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.65rem;
   border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
-td span.bg-green-100 { background-color: #40de8d; color: #065f46; border: 1px solid #10b981; }
-td span.bg-red-100 { background-color: #e93030; color: #991b1b; border: 1px solid #ef4444; }
+td span.bg-green-100 {
+  background-color: rgba(22, 163, 74, 0.14);
+  color: #064e3b;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+td span.bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.14);
+  color: #7f1d1d;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
 
 td > button {
   padding: 0.25rem 0.5rem;
