@@ -18,10 +18,10 @@ const router = createRouter({
       path: '/',
       component: () => import('@/layouts/AdminLayout.vue'),
       children: [
-        { path: 'dashboard', component: () => import('@/pages/Dashboard.vue') },
-        { path: 'merchant-list', component: () => import('@/pages/MerchantList.vue') },
-        { path: 'customer-list', component: () => import('@/pages/CustomerList.vue') },
-        { path: 'booking-list', component: () => import('@/pages/BookingList.vue') }
+        { path: 'dashboard', name: 'Dashboard', component: () => import('@/pages/Dashboard.vue') },
+        { path: 'merchant-list', name: 'MerchantList', component: () => import('@/pages/MerchantList.vue') },
+        { path: 'customer-list', name: 'CustomerList', component: () => import('@/pages/CustomerList.vue') },
+        { path: 'booking-list', name: 'BookingList', component: () => import('@/pages/BookingList.vue') }
       ]
     },
 
