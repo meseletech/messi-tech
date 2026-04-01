@@ -8,40 +8,47 @@
 
     <!-- Scrollable menu -->
     <nav class="menu">
-      <router-link :to="{ name: 'Dashboard' }" class="menu-item" active-class="active-link">
+      <button type="button" class="menu-item" @click="navigate('/dashboard')" :class="{ 'active-link': route.path === '/dashboard' }">
         <span class="icon">🏠</span>
         <span>{{ $t('dashboard.title') }}</span>
-      </router-link>
+      </button>
 
-      <router-link :to="{ name: 'MerchantList' }" class="menu-item" active-class="active-link">
+      <button type="button" class="menu-item" @click="navigate('/merchant-list')" :class="{ 'active-link': route.path === '/merchant-list' }">
         <span class="icon">📦</span>
         <span>{{ $t('merchantList.title') }}</span>
-      </router-link>
+      </button>
 
-      <router-link :to="{ name: 'CustomerList' }" class="menu-item" active-class="active-link">
+      <button type="button" class="menu-item" @click="navigate('/customer-list')" :class="{ 'active-link': route.path === '/customer-list' }">
         <span class="icon">👥</span>
         <span>{{ $t('customer.listTitle') }}</span>
-      </router-link>
+      </button>
 
-      <router-link :to="{ name: 'BookingList' }" class="menu-item" active-class="active-link">
+      <button type="button" class="menu-item" @click="navigate('/booking-list')" :class="{ 'active-link': route.path === '/booking-list' }">
         <span class="icon">📅</span>
         <span>{{ $t('bookingList.title') }}</span>
-      </router-link>
+      </button>
     </nav>
   </aside>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: true }
 });
 
+const router = useRouter();
+const route = useRoute();
 const isMobile = ref(window.innerWidth <= 768);
 
 function handleResize() {
   isMobile.value = window.innerWidth <= 768;
+}
+
+function navigate(path) {
+  router.push(path).catch(() => {})
 }
 
 onMounted(() => window.addEventListener('resize', handleResize));
