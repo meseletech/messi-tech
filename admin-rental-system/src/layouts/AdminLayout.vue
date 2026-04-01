@@ -61,13 +61,14 @@ watch(theme, (newTheme) => {
 /* Layout */
 .layout {
   display: flex;
+  align-items: flex-start;
 }
 
 /* Main content area */
 .content {
   flex: 1;
   padding: 20px;
-  margin-left: 240px; /* Push content beside sidebar */
+  margin-left: 0;
   height: calc(100vh - 64px);
   overflow-y: auto;
   transition: margin-left 0.3s ease;

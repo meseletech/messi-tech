@@ -59,16 +59,15 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
 </script>
 
 <style scoped>
-/* FIXED SIDEBAR */
+/* SIDEBAR */
 .sidebar {
-  width: 240px;
+  width: 260px;
   background: linear-gradient(180deg, #ffffff, #f8fafc);
   padding: 1.25rem;
   box-shadow: 2px 0 18px rgba(15, 23, 42, 0.08);
   border-right: 1px solid rgba(148, 163, 184, 0.16);
-  position: fixed;
+  position: sticky;
   top: 64px; /* Below navbar */
-  left: 0;
   height: calc(100vh - 64px);
   overflow: hidden;
   transition: transform 0.3s ease;
@@ -132,7 +131,9 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
   width: 72%;
   max-width: 280px;
   border-radius: 0;
+  position: fixed;
   top: 0;
+  left: 0;
   height: 100vh;
   padding-top: 74px;
   transform: translateX(-100%);
