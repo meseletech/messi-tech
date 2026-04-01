@@ -67,7 +67,7 @@ watch(theme, (newTheme) => {
 .content {
   flex: 1;
   padding: 20px;
-  margin-left: 220px; /* Push content beside sidebar */
+  margin-left: 240px; /* Push content beside sidebar */
   height: calc(100vh - 64px);
   overflow-y: auto;
   transition: margin-left 0.3s ease;
