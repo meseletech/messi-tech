@@ -2,7 +2,10 @@
   <aside :class="['sidebar', { 'sidebar-closed': !isOpen, mobile: isMobile, 'sidebar-open': isOpen }]">
     
     <div class="sidebar-header">
-      <h2>{{ $t('dashboard.title') }}</h2>
+      <div>
+        <p class="brand-label">Admin Panel</p>
+        <h2>{{ $t('dashboard.title') }}</h2>
+      </div>
       <button v-if="isMobile" class="close-btn" @click="$emit('toggle-sidebar')">✕</button>
     </div>
 
@@ -58,40 +61,80 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
 <style scoped>
 /* FIXED SIDEBAR */
 .sidebar {
-  width: 220px;
-  background: white;
-  padding: 1rem;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  width: 240px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  padding: 1.25rem;
+  box-shadow: 2px 0 18px rgba(15, 23, 42, 0.08);
+  border-right: 1px solid rgba(148, 163, 184, 0.16);
   position: fixed;
   top: 64px; /* Below navbar */
   left: 0;
   height: calc(100vh - 64px);
-  overflow: hidden; /* Prevent scrolling */
+  overflow: hidden;
   transition: transform 0.3s ease;
   z-index: 60;
+  color: #0f172a;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.brand-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-header h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+}
+
+.close-btn {
+  background: rgba(15, 23, 42, 0.05);
+  border: none;
+  color: #0f172a;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(15, 23, 42, 0.12);
 }
 
 /* Sidebar content scrolls here */
 .menu {
   margin-top: 1rem;
   overflow-y: auto;
-  height: calc(100% - 60px);
+  height: calc(100% - 74px);
   padding-right: 4px;
 }
 
-/* DESKTOP CLOSED */
 .sidebar-closed {
   transform: translateX(-100%);
 }
 
-/* MOBILE MODE */
 .mobile {
-  width: 70%;
-  max-width: 260px;
+  width: 72%;
+  max-width: 280px;
   border-radius: 0;
   top: 0;
   height: 100vh;
-  padding-top: 70px;
+  padding-top: 74px;
   transform: translateX(-100%);
 }
 
@@ -102,20 +145,49 @@ onUnmounted(() => window.removeEventListener('resize', handleResize));
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  color: #6b7280;
-  text-decoration: none;
-  margin-bottom: 0.5rem;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  color: #334155;
+  background: rgba(15, 23, 42, 0.015);
+  border: 1px solid transparent;
+  margin-bottom: 0.6rem;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 
-.menu-item:hover,
-.menu-item.router-link-active,
+.menu-item:hover {
+  background: rgba(56, 189, 248, 0.12);
+  color: #0f172a;
+  transform: translateX(1px);
+}
+
 .menu-item.active-link {
-  background: #7184b7;
-  color: white;
+  background: #0284c7;
+  color: #ffffff;
+  border-color: rgba(2, 132, 199, 0.4);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: rgba(2, 132, 199, 0.12);
+  color: #0369a1;
+  font-size: 1rem;
+}
+
+.menu-item.active-link .icon {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.menu-item span:last-child {
+  font-size: 0.96rem;
+  font-weight: 600;
 }
 </style>

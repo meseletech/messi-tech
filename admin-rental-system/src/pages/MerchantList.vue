@@ -226,14 +226,28 @@ const handleFileUpload = (e) => { form.value.profilePictureFile = e.target.files
 
 const fetchMerchants = async () => {
   loading.value = true
+  message.value = ''
+  isError.value = false
+
   try {
     const token = localStorage.getItem('adminToken')
     const { data } = await axios.get('https://lmgtech-4.onrender.com/merchant/all', {
       headers: { Authorization: `Bearer ${token}` },
     })
-    merchants.value = data || []
+
+    if (Array.isArray(data)) {
+      merchants.value = data
+    } else if (Array.isArray(data.merchants)) {
+      merchants.value = data.merchants
+    } else if (Array.isArray(data.data)) {
+      merchants.value = data.data
+    } else {
+      merchants.value = data || []
+    }
   } catch (err) {
-    console.error(err)
+    console.error('Failed to fetch merchants:', err)
+    message.value = err.response?.data?.message || 'Failed to load merchants.'
+    isError.value = true
   } finally {
     loading.value = false
   }
@@ -328,9 +342,10 @@ const confirmAction = async () => {
 }
 
 const filteredMerchants = computed(() => {
-  if (!searchQuery.value.trim()) return merchants.value
+  const currentMerchants = Array.isArray(merchants.value) ? merchants.value : []
+  if (!searchQuery.value.trim()) return currentMerchants
   const q = searchQuery.value.toLowerCase()
-  return merchants.value.filter(
+  return currentMerchants.filter(
     m => m.fullName?.toLowerCase().includes(q) ||
          m.email?.toLowerCase().includes(q) ||
          m.businessName?.toLowerCase().includes(q)
