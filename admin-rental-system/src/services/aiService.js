@@ -1,7 +1,7 @@
 import axios from "axios"
 
-// ✅ CALL BACKEND (NOT AI SERVICE DIRECTLY)
-const AI_BASE_URL = "https://lmgtech-4.onrender.com/admin/ai"
+// ✅ CALL HOSTED AI SERVICE DIRECTLY
+const AI_BASE_URL = "https://messi-tech-1.onrender.com"
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("adminToken") || localStorage.getItem("managerToken")
@@ -42,14 +42,14 @@ export const getMerchantRisk = async () => {
 // Retrain Models
 // ============================
 export const retrainFraudModel = async () => {
-  const res = await axios.post(`${AI_BASE_URL}/retrain-fraud`, {}, {
+  const res = await axios.post(`${AI_BASE_URL}/retrain/fraud`, {}, {
     headers: getAuthHeaders(),
   })
   return res.data
 }
 
 export const retrainMerchantModel = async () => {
-  const res = await axios.post(`${AI_BASE_URL}/retrain-merchant`, {}, {
+  const res = await axios.post(`${AI_BASE_URL}/retrain/merchant`, {}, {
     headers: getAuthHeaders(),
   })
   return res.data

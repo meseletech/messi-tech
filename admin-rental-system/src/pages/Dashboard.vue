@@ -5,6 +5,17 @@
       🚨 {{ aiAlertMessage }}
     </div>
 
+    <!-- AI CONTROLS -->
+    <div class="ai-controls">
+      <button class="ai-btn" @click="handleRetrainFraud" :disabled="retrainingFraud">
+        {{ retrainingFraud ? 'Retraining Fraud...' : 'Retrain Fraud Model' }}
+      </button>
+      <button class="ai-btn" @click="handleRetrainMerchant" :disabled="retrainingMerchant">
+        {{ retrainingMerchant ? 'Retraining Merchant...' : 'Retrain Merchant Model' }}
+      </button>
+      <button class="ai-btn refresh-btn" @click="fetchAIMetrics">Refresh AI Data</button>
+    </div>
+
     <!-- TOTAL CARDS -->
     <div class="stats-grid">
       <div class="stat-card light-card" @click="toggleSection('merchants')">
@@ -15,7 +26,7 @@
         <p>Total Customers</p>
         <h3>{{ totalCustomers }}</h3>
       </div>
-      <div class="stat-card light-card" @click="toggleSection('bookings')">
+      <div class="stat-card light-card" @click="showBookings()">
         <p>Total Bookings</p>
         <h3>{{ totalBookings }}</h3>
       </div>
@@ -51,6 +62,17 @@
 
     <!-- BOOKINGS SECTION -->
     <div v-if="activeSection === 'bookings'">
+      <div class="booking-section-header">
+        <div class="stat-card light-card">
+          <p>Total Bookings</p>
+          <h3>{{ totalBookings }}</h3>
+        </div>
+        <div class="stat-card yellow-card">
+          <p>Average AI Risk</p>
+          <h3>{{ aiRiskAvg }}%</h3>
+        </div>
+      </div>
+
       <div class="sub-grid">
         <div v-for="(count, status) in bookingStatuses" :key="status" class="stat-card yellow-card" @click="filterBookings(status)">
           <p>{{ status.toUpperCase() }}</p>
@@ -64,13 +86,14 @@
 
       <!-- Chart -->
       <div class="chart-section">
+        <h4 class="chart-title">Booking Risk Levels</h4>
         <canvas id="bookingChart"></canvas>
       </div>
 
       <!-- Booking Cards -->
       <div class="booking-grid">
         <div v-for="booking in filteredBookings" :key="booking._id" class="booking-card" @click="openModal(booking)">
-          <img :src="booking.image || defaultImage" class="booking-image"/>
+          <img :src="getBookingImage(booking)" class="booking-image"/>
           <div class="booking-info">
             <h4>{{ booking.customerName || 'Customer' }}</h4>
             <p>Merchant: {{ booking.merchantName || 'Merchant' }}</p>
@@ -128,7 +151,7 @@
 <script>
 import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import Chart from "chart.js/auto";
-import { getAIAnalytics, getFraudDetection, getMerchantRisk } from "@/services/aiService";
+import { getAIAnalytics, getFraudDetection, getMerchantRisk, retrainFraudModel, retrainMerchantModel } from "@/services/aiService";
 import axios from "axios";
 
 export default {
@@ -151,13 +174,25 @@ export default {
     const bookingStatuses = ref({});
     const aiRiskAvg = ref(0);
     const aiAlertMessage = ref(null);
+    const retrainingFraud = ref(false);
+    const retrainingMerchant = ref(false);
     const defaultImage = "https://via.placeholder.com/300x200.png?text=No+Image";
     const chartInstance = ref(null);
 
     const toggleSection = (section) => {
       activeSection.value = activeSection.value === section ? null : section;
       selectedList.value = [];
-      if(section === "bookings") nextTick(() => createChart());
+      if (section === "bookings") {
+        filteredBookings.value = bookingsData.value;
+        nextTick(() => createChart());
+      }
+    };
+
+    const showBookings = () => {
+      activeSection.value = "bookings";
+      selectedList.value = [];
+      filteredBookings.value = bookingsData.value;
+      nextTick(() => createChart());
     };
 
     const showList = (type, status) => {
@@ -167,7 +202,37 @@ export default {
     };
 
     const formatDate = (date) => new Date(date).toLocaleDateString();
-    const filterBookings = (status) => { filteredBookings.value = bookingsData.value.filter(b => b.status?.toLowerCase() === status); };
+
+    const getBookingStatus = (booking) => {
+      return (booking.status || booking.bookingStatus || booking.state || "unknown").toString();
+    };
+
+    const getBookingImage = (booking) => {
+      return (
+        booking.image ||
+        booking.photo ||
+        booking.coverImage ||
+        booking.picture ||
+        booking.vehicleImage ||
+        booking.carImage ||
+        booking.customer?.avatar ||
+        booking.merchant?.logo ||
+        defaultImage
+      );
+    };
+
+    const estimateRisk = (booking) => {
+      const st = getBookingStatus(booking).toLowerCase();
+      if (["cancelled", "declined", "decline"].includes(st)) return 80;
+      if (st === "pending") return 55;
+      if (["confirmed", "accepted"].includes(st)) return 20;
+      return 40;
+    };
+
+    const filterBookings = (status) => {
+      filteredBookings.value = bookingsData.value.filter(b => getBookingStatus(b).toLowerCase() === status);
+    };
+
     const resetFilter = () => { filteredBookings.value = bookingsData.value; };
     const openModal = (booking) => { selectedBooking.value = booking; };
     const riskClass = (score) => score >= 70 ? "high-risk" : score >= 40 ? "medium-risk" : "low-risk";
@@ -177,12 +242,37 @@ export default {
         const ctx = document.getElementById("bookingChart");
         if (!ctx) return;
         if (chartInstance.value) chartInstance.value.destroy();
+
+        const chartLabels = filteredBookings.value.map((booking, index) => {
+          return booking.customerName || booking.merchantName || `Booking ${index + 1}`;
+        });
+        const chartData = filteredBookings.value.map((booking) => Number(booking.aiRiskScore || 0));
+
         chartInstance.value = new Chart(ctx, {
           type: "bar",
           data: {
-            labels: Object.keys(bookingStatuses.value),
-            datasets: [{ label: "Bookings by Status", data: Object.values(bookingStatuses.value) }]
+            labels: chartLabels,
+            datasets: [{
+              label: "Booking Risk Score",
+              data: chartData,
+              backgroundColor: chartData.map((value) => value >= 70 ? "#f87171" : value >= 40 ? "#fbbf24" : "#34d399"),
+            }]
           },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: { display: true, text: 'Risk (%)' }
+              },
+              x: {
+                title: { display: true, text: 'Booking' }
+              }
+            },
+            plugins: {
+              legend: { display: false }
+            }
+          }
         });
       });
     };
@@ -200,18 +290,68 @@ export default {
           analytics.bookings.forEach(a => { if(map[a._id]) map[a._id].aiRiskScore = a.aiRiskScore || 0; });
         }
 
-        // Average risk
-        const risks = analytics?.bookings?.map(b => b.aiRiskScore || 0) || [];
-        aiRiskAvg.value = risks.length ? Math.round(risks.reduce((a,b)=>a+b,0)/risks.length) : 0;
+        // Average risk (analytics-only snapshot)
+        const analyticsRisks = analytics?.bookings?.map(b => b.aiRiskScore || 0) || [];
+        aiRiskAvg.value = analyticsRisks.length ? Math.round(analyticsRisks.reduce((a,b)=>a+b,0)/analyticsRisks.length) : 0;
+
+        // Merge AI risk to bookings and fill fallback risk values
+        const analyticsBookings = analytics?.bookings || [];
+        const analyticsMap = new Map(analyticsBookings.map((b) => [String(b._id), Number(b.aiRiskScore || 0)]));
+
+        bookingsData.value.forEach((booking) => {
+          const idKey = String(booking._id || booking.id || "");
+          const matched = analyticsMap.get(idKey);
+          booking.aiRiskScore = matched != null ? matched : (booking.aiRiskScore || estimateRisk(booking));
+        });
+
+        // AI risk avg should use the final booking aiRiskScore values
+        const risks = bookingsData.value.map((b) => Number(b.aiRiskScore || 0));
+        aiRiskAvg.value = risks.length ? Math.round(risks.reduce((a, b) => a + b, 0) / risks.length) : 0;
 
         // Fraud alerts
-        const alerts = fraud?.alerts || [];
-        aiAlertMessage.value = alerts.length ? `⚠️ Fraud detected: ${alerts.length} alerts!` : null;
+        const totalFrauds = fraud?.totalFrauds || 0;
+        aiAlertMessage.value = totalFrauds > 0 ? `⚠️ Fraud detected: ${totalFrauds} suspicious cases!` : null;
+
+        // Update current bookings chart counts (again)
+        const counts = {};
+        bookingsData.value.forEach(b => {
+          const status = getBookingStatus(b).toLowerCase() || "unknown";
+          counts[status] = (counts[status] || 0) + 1;
+        });
+        bookingStatuses.value = counts;
 
         createChart();
       } catch(err) {
         console.error(err);
         aiAlertMessage.value = "Failed to fetch AI metrics.";
+      }
+    };
+
+    const handleRetrainFraud = async () => {
+      retrainingFraud.value = true;
+      try {
+        await retrainFraudModel();
+        alert("Fraud model retrained successfully!");
+        await fetchAIMetrics(); // Refresh data
+      } catch(err) {
+        console.error(err);
+        alert("Failed to retrain fraud model.");
+      } finally {
+        retrainingFraud.value = false;
+      }
+    };
+
+    const handleRetrainMerchant = async () => {
+      retrainingMerchant.value = true;
+      try {
+        await retrainMerchantModel();
+        alert("Merchant model retrained successfully!");
+        await fetchAIMetrics(); // Refresh data
+      } catch(err) {
+        console.error(err);
+        alert("Failed to retrain merchant model.");
+      } finally {
+        retrainingMerchant.value = false;
       }
     };
 
@@ -239,23 +379,28 @@ export default {
       filteredBookings.value = bookingsData.value;
       totalBookings.value = bookingsData.value.length;
 
-      // Booking statuses
+      // Booking statuses (normalize from all possible fields)
       const counts = {};
-      bookingsData.value.forEach(b => { const s = b.status?.toLowerCase() || "unknown"; counts[s] = (counts[s]||0)+1; });
+      bookingsData.value.forEach(b => {
+        const status = getBookingStatus(b).toLowerCase() || "unknown";
+        counts[status] = (counts[status] || 0) + 1;
+      });
       bookingStatuses.value = counts;
 
       await fetchAIMetrics();
-      createChart();
+      // createChart is already called inside fetchAIMetrics when relevant
+
     };
 
     onMounted(() => fetchDashboardData());
     onUnmounted(() => { if(chartInstance.value) chartInstance.value.destroy(); });
 
     return {
-      activeSection, toggleSection, showList, totalMerchants, activeMerchants, suspendedMerchants,
+      activeSection, toggleSection, showBookings, showList, totalMerchants, activeMerchants, suspendedMerchants,
       totalCustomers, activeCustomers, suspendedCustomers, totalBookings, bookingStatuses,
       filteredBookings, filterBookings, resetFilter, selectedList, listTitle, formatDate,
-      defaultImage, openModal, selectedBooking, aiAlertMessage, aiRiskAvg, fetchAIMetrics, riskClass
+      defaultImage, openModal, selectedBooking, aiAlertMessage, aiRiskAvg, fetchAIMetrics, riskClass,
+      retrainingFraud, retrainingMerchant, handleRetrainFraud, handleRetrainMerchant
     };
   }
 };
@@ -264,6 +409,17 @@ export default {
 /* ===== BASE LAYOUT ===== */
 .dashboard { padding: 24px; background: #f8fafc; min-height: 100vh; }
 .title { font-size: 28px; font-weight: 700; margin-bottom: 24px; }
+/* ===== AI ALERT ===== */
+.ai-alert { background: #fee2e2; color: #991b1b; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; }
+/* ===== AI CONTROLS ===== */
+.ai-controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.ai-btn { background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+.ai-btn:hover:not(:disabled) { background: #2563eb; }
+.ai-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+.refresh-btn { background: #10b981; }
+.refresh-btn:hover:not(:disabled) { background: #059669; }
+.booking-section-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.booking-section-header .stat-card { cursor: default; }
 /* ===== GRID SYSTEM ===== */
 .stats-grid, .sub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 24px; }
 /* ===== CARDS ===== */
@@ -287,6 +443,11 @@ export default {
 .decline { background: #fee2e2; color: #991b1b; }
 .cancelled { background: #e5e7eb; color: #374151; }
 .confirmed { background: #dbeafe; color: #1e40af; }
+/* ===== RISK SCORE ===== */
+.risk-score { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.low-risk { background: #dcfce7; color: #166534; }
+.medium-risk { background: #fef9c3; color: #854d0e; }
+.high-risk { background: #fee2e2; color: #991b1b; }
 /* ===== TABLE ===== */
 .list-section { margin-top: 30px; overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; background: white; min-width: 500px; }
@@ -295,6 +456,7 @@ export default {
 .suspended-badge { background: #fee2e2; color: #991b1b; padding: 5px 12px; border-radius: 12px; }
 /* ===== CHART ===== */
 .chart-section { background: white; padding: 20px; border-radius: 14px; margin-bottom: 20px; overflow-x: auto; }
+.chart-title { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
 /* ===== MODAL ===== */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; justify-content: center; align-items: center; padding: 20px; z-index: 999; }
 .modal { background: white; border-radius: 16px; width: 100%; max-width: 450px; padding: 25px; animation: fadeIn 0.3s ease; }
