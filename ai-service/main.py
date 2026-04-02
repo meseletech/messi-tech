@@ -39,9 +39,9 @@ async def start_scheduler():
 # ==========================
 # Health check
 # ==========================
-@app.get("/")
-async def health():
-    return {"status": "AI service running"}
+@app.api_route("/health", methods=["GET", "HEAD"])
+def health():
+    return {"status": "ok"}
 
 # ==========================
 # Merchant risk
