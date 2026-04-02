@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-// this is used to fetch the local nest backend
-const API_URL = 'http://localhost:3000/admin'
+// this is used to fetch the hosted backend
+const API_URL = 'https://lmgtech-4.onrender.com/admin'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

@@ -26,8 +26,48 @@ const app = express()
 app.use(cors({ origin: '*' }))
 app.use(express.json())
 
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'https://messi-tech-1.onrender.com'
+
+const forwardHeaders = (req) => {
+  const headers = {}
+  if (req.headers.authorization) headers.Authorization = req.headers.authorization
+  if (req.headers['content-type']) headers['Content-Type'] = req.headers['content-type']
+  return headers
+}
+
+const proxyAIRequest = async (method, path, req, res) => {
+  try {
+    const response = await fetch(`${AI_SERVICE_URL}${path}`, {
+      method,
+      headers: forwardHeaders(req),
+      body: method === 'GET' ? undefined : JSON.stringify(req.body || {})
+    })
+
+    const data = await response.text()
+    const contentType = response.headers.get('content-type') || ''
+    const body = contentType.includes('application/json') ? JSON.parse(data || '{}') : data
+
+    res.status(response.status)
+    if (contentType.includes('application/json')) {
+      res.json(body)
+    } else {
+      res.send(body)
+    }
+  } catch (error) {
+    console.error('AI proxy error:', error)
+    res.status(502).json({ error: 'AI service proxy failed', details: error.message })
+  }
+}
+
 // Basic health
 app.get('/api/health', (req, res) => res.json({ ok: true, now: Date.now() }))
+
+// AI proxy endpoints
+app.get('/api/ai/analytics', (req, res) => proxyAIRequest('GET', '/analytics', req, res))
+app.get('/api/ai/fraud-detection', (req, res) => proxyAIRequest('GET', '/fraud-detection', req, res))
+app.get('/api/ai/merchant-risk', (req, res) => proxyAIRequest('GET', '/merchant-risk', req, res))
+app.post('/api/ai/retrain/fraud', (req, res) => proxyAIRequest('POST', '/retrain/fraud', req, res))
+app.post('/api/ai/retrain/merchant', (req, res) => proxyAIRequest('POST', '/retrain/merchant', req, res))
 
 // List merchants
 app.get('/api/merchants', (req, res) => {
