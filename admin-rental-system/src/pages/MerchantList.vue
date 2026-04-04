@@ -1,102 +1,94 @@
 <template>
-  <div class="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
+  <div class="merchant-list">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-      <div>
-        <p class="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 mb-1">{{ t('merchantList.subtitle') }}</p>
-        <h2 class="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-          {{ t('merchantList.title') }}
-        </h2>
+    <div class="header">
+      <div class="header-content">
+        <p class="subtitle">{{ t('merchantList.subtitle') }}</p>
+        <h1 class="title">{{ t('merchantList.title') }}</h1>
       </div>
-      <button
-        @click="fetchMerchants"
-        class="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-sky-700"
-      >
+      <button @click="fetchMerchants" class="refresh-btn">
+        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
         {{ t('actions.refresh') }}
       </button>
     </div>
 
     <!-- Search Bar -->
-    <div class="mb-4">
-      <input
-        v-model="searchQuery"
-        :placeholder="t('merchantList.searchPlaceholder')"
-        class="w-full md:w-1/3 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-100"
-      />
+    <div class="search-container">
+      <div class="search-wrapper">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input
+          v-model="searchQuery"
+          :placeholder="t('merchantList.searchPlaceholder')"
+          class="search-input"
+        />
+      </div>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="text-center py-6 text-gray-500 dark:text-gray-400">
-      <div class="loader mb-2 mx-auto"></div>
-      {{ t('merchantList.loading') }}
+    <div v-if="loading" class="loading-container">
+      <div class="loader"></div>
+      <p>{{ t('merchantList.loading') }}</p>
     </div>
 
     <!-- Merchant Table -->
-    <div v-else class="overflow-x-auto rounded-xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-      <table class="min-w-full text-sm text-left">
-        <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+    <div class="table-container">
+      <table class="data-table">
+        <thead class="table-header">
           <tr>
-            <th class="px-5 py-4 font-medium">#</th>
-            <th class="px-5 py-4 font-medium">{{ t('merchantList.name') }}</th>
-            <th class="px-5 py-4 font-medium">{{ t('merchantList.email') }}</th>
-            <th class="px-5 py-4 font-medium">{{ t('merchantList.phone') }}</th>
-            <th class="px-5 py-4 font-medium">{{ t('merchantList.businessName') }}</th>
-            <th class="px-5 py-4 font-medium">{{ t('merchantList.address') }}</th>
-            <th class="px-5 py-4 font-medium">{{ t('merchantList.status') }}</th>
-            <th class="px-5 py-4 font-medium text-center">{{ t('actions.actions') }}</th>
+            <th class="table-th">#</th>
+            <th class="table-th">{{ t('merchantList.name') }}</th>
+            <th class="table-th">{{ t('merchantList.email') }}</th>
+            <th class="table-th">{{ t('merchantList.phone') }}</th>
+            <th class="table-th">{{ t('merchantList.businessName') }}</th>
+            <th class="table-th">{{ t('merchantList.address') }}</th>
+            <th class="table-th">{{ t('merchantList.status') }}</th>
+            <th class="table-th text-center">{{ t('actions.actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="(merchant, index) in filteredMerchants"
             :key="merchant._id"
-            class="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+            class="table-row"
           >
-            <td class="px-4 py-2">{{ index + 1 }}</td>
-            <td class="px-4 py-2">{{ merchant.fullName }}</td>
-            <td class="px-4 py-2">{{ merchant.email }}</td>
-            <td class="px-4 py-2">{{ merchant.phonenumber || '-' }}</td>
-            <td class="px-4 py-2">{{ merchant.businessName }}</td>
-            <td class="px-4 py-2">{{ merchant.address }}</td>
-            <td class="px-4 py-2">
-              <span
-                :class="[
-                  'px-2 py-1 rounded-full text-xs font-semibold border',
-                  merchant.isActive
-                    ? 'bg-green-100 text-green-700 border-green-400 dark:bg-green-700 dark:text-green-100 dark:border-green-600'
-                    : 'bg-red-100 text-red-700 border-red-400 dark:bg-red-700 dark:text-red-100 dark:border-red-600'
-                ]"
-              >
+            <td class="table-td">{{ index + 1 }}</td>
+            <td class="table-td">{{ merchant.fullName }}</td>
+            <td class="table-td">{{ merchant.email }}</td>
+            <td class="table-td">{{ merchant.phonenumber || '-' }}</td>
+            <td class="table-td">{{ merchant.businessName }}</td>
+            <td class="table-td">{{ merchant.address }}</td>
+            <td class="table-td">
+              <span :class="merchant.isActive ? 'status-active' : 'status-suspended'">
                 {{ merchant.isActive ? t('merchantList.active') : t('merchantList.suspended') }}
               </span>
             </td>
-            <td class="px-4 py-2 text-center flex flex-wrap justify-center gap-1">
-              <button
-                @click="openEditModal(merchant)"
-                class="px-3 py-1 rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-semibold hover:scale-105 transition"
-              >
-                {{ t('actions.edit') }}
-              </button>
-              <button
-                @click="openConfirmModal('toggle', merchant)"
-                :class="[
-                  'px-3 py-1 rounded text-white text-xs font-semibold hover:scale-105 transition',
-                  merchant.isActive ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'
-                ]"
-              >
-                {{ merchant.isActive ? t('actions.suspend') : t('actions.unsuspend') }}
-              </button>
-              <button
-                @click="openConfirmModal('delete', merchant)"
-                class="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-semibold hover:scale-105 transition"
-              >
-                {{ t('actions.delete') }}
-              </button>
+            <td class="table-td text-center">
+              <div class="action-buttons">
+                <button @click="openEditModal(merchant)" class="btn-edit">
+                  <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  {{ t('actions.edit') }}
+                </button>
+                <button @click="openConfirmModal('toggle', merchant)" :class="merchant.isActive ? 'btn-suspend' : 'btn-unsuspend'">
+                  {{ merchant.isActive ? t('actions.suspend') : t('actions.unsuspend') }}
+                </button>
+                <button @click="openConfirmModal('delete', merchant)" class="btn-delete">
+                  <svg class="icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  {{ t('actions.delete') }}
+                </button>
+              </div>
             </td>
           </tr>
 
-          <tr v-if="!filteredMerchants.length">
-            <td colspan="8" class="text-center py-6 text-gray-500 dark:text-gray-400">
+          <tr v-if="!filteredMerchants.length" class="empty-row">
+            <td colspan="8" class="empty-cell">
               {{ t('merchantList.empty') }}
             </td>
           </tr>
@@ -105,9 +97,12 @@
     </div>
 
     <!-- Add Merchant Button -->
-    <div class="mt-6 text-right">
-      <button @click="openAddModal" class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition duration-200 hover:bg-slate-800">
-        + {{ t('merchant.add') }}
+    <div class="add-button-container">
+      <button @click="openAddModal" class="add-btn">
+        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        {{ t('merchant.add') }}
       </button>
     </div>
 
@@ -356,159 +351,368 @@ onMounted(fetchMerchants)
 </script>
 
 <style scoped>
-/* Loader */
-.loader, .loader-spinner {
+/* ===== BASE LAYOUT ===== */
+.merchant-list {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
+}
+.dark .merchant-list {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 16px;
+}
+.header-content {
+  flex: 1;
+}
+.title {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #1f2937;
+}
+.dark .title {
+  color: #f9fafb;
+}
+.subtitle {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  margin: 0;
+}
+.dark .subtitle {
+  color: #9ca3af;
+}
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+.refresh-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* ===== SEARCH ===== */
+.search-container {
+  margin-bottom: 24px;
+}
+.search-wrapper {
+  position: relative;
+  max-width: 400px;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #6b7280;
+}
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.dark .search-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ===== LOADING ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: #6b7280;
+}
+.dark .loading-container {
+  color: #9ca3af;
+}
+
+/* ===== TABLE ===== */
+.table-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+}
+.dark .table-container {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  border-color: #4b5563;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table-header {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+}
+.dark .table-header {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+.table-th {
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+}
+.dark .table-th {
+  color: #f9fafb;
+  border-bottom-color: #4b5563;
+}
+.table-row {
+  transition: all 0.2s ease;
+}
+.table-row:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+.dark .table-row:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+.table-td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+.dark .table-td {
+  border-bottom-color: #4b5563;
+  color: #f9fafb;
+}
+.status-active {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+.dark .status-active {
+  background: #14532d;
+  color: #bbf7d0;
+  border-color: #166534;
+}
+.status-suspended {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+.dark .status-suspended {
+  background: #7f1d1d;
+  color: #fca5a5;
+  border-color: #991b1b;
+}
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+.btn-suspend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-suspend:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+.btn-unsuspend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-unsuspend:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+.btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+.empty-row {
+  text-align: center;
+}
+.empty-cell {
+  padding: 48px;
+  color: #6b7280;
+}
+.dark .empty-cell {
+  color: #9ca3af;
+}
+
+/* ===== ADD BUTTON ===== */
+.add-button-container {
+  text-align: right;
+}
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
+}
+.dark .add-btn {
+  background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+  color: #1f2937;
+}
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(31, 41, 55, 0.4);
+}
+.dark .add-btn:hover {
+  box-shadow: 0 8px 20px rgba(249, 250, 251, 0.2);
+}
+
+/* ===== ICONS ===== */
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+.icon-xs {
+  width: 14px;
+  height: 14px;
+}
+
+/* ===== LOADER ===== */
+.loader {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #3b82f6;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   animation: spin 1s linear infinite;
-  display: inline-block;
+  margin-bottom: 16px;
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* Form Inputs */
-.form-input {
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  background-color: #ffffff;
-  color: #0f172a;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.dark .loader {
+  border-color: #4b5563;
+  border-top-color: #3b82f6;
 }
-.dark .form-input {
-  background-color: #0f172a;
-  color: #e2e8f0;
-  border-color: #334155;
-}
-.form-input:focus {
-  outline: none;
-  border-color: #0284c7;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18);
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Add Merchant Button */
-.mt-6.text-right > button {
-  background-color: #0f172a;
-  color: white;
-  padding: 0.75rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  border-radius: 0.75rem;
-  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.12);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-}
-.mt-6.text-right > button:hover {
-  transform: translateY(-1px);
-  background-color: #111827;
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
-}
-
-/* Merchant Table */
-table {
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-}
-thead {
-  background-color: #f8fafc;
-}
-thead th {
-  padding: 1rem 1.25rem;
-  font-weight: 700;
-  text-align: left;
-  color: #111827;
-}
-.dark thead {
-  background-color: #111827;
-}
-.dark thead th {
-  color: #e2e8f0;
-}
-tbody td {
-  padding: 0.85rem 1.25rem;
-  color: #334155;
-  border-bottom: 1px solid #e2e8f0;
-}
-.dark tbody td {
-  color: #cbd5e1;
-  border-bottom-color: #334155;
-}
-
-/* Status Badges */
-td span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.35rem 0.65rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-td span.bg-green-100 {
-  background-color: rgba(22, 163, 74, 0.14);
-  color: #064e3b;
-  border: 1px solid rgba(16, 185, 129, 0.35);
-}
-td span.bg-red-100 {
-  background-color: rgba(239, 68, 68, 0.14);
-  color: #7f1d1d;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-
-td > button {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 0.375rem;
-  transition: all 0.2s ease-in-out;
-}
-td > button:hover {
-  transform: scale(1.05);
-}
-
-/* Modals */
-.fixed.inset-0.flex.items-center.justify-center {
-  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px); overflow: hidden;
-}
-.bg-white.dark\:bg-slate-900 {
-  width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;
-  border-radius: 0.75rem; padding: 1.5rem; position: relative;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: all 0.3s ease-in-out;
-}
-
-/* Password Field */
-.password-wrapper { display: flex; align-items: center; position: relative; width: 100%; }
-.password-wrapper .form-input { flex: 1; padding-right: 3rem; }
-.password-toggle-btn {
-  position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer;
-  font-size: 0.85rem; color: #6b7280; height: 100%; display: flex; align-items: center; transition: color 0.2s;
-}
-.password-toggle-btn:hover { color: #2563eb; }
-
-/* Submit Button */
-.btn-submit { background-color: #3b82f6; color: white; font-weight: 600; padding: 0.6rem 1.2rem; border-radius: 0.5rem; font-size: 1rem; width: 100%; transition: all 0.2s ease-in-out; }
-.btn-submit:hover { background-color: #2563eb; transform: translateY(-1px) scale(1.02); }
-
-/* Responsive Table Cards */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  table thead { display: none; }
-  table tbody tr { display: block; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 1rem; padding: 0.5rem; background-color: white; }
-  table tbody td { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid #e5e7eb; }
-  table tbody td:last-child { border-bottom: 0; flex-wrap: wrap; gap: 0.25rem; justify-content: center; }
-  td > button { flex: 1 1 45%; margin-bottom: 0.25rem; }
-}
-
-/* Fullscreen Modals on Mobile */
-@media (max-width: 640px) {
-  .bg-white.dark\:bg-slate-900 { width: 95% !important; max-height: 90vh !important; border-radius: 0.5rem !important; padding: 1rem !important; overflow-y: auto; overflow-x: hidden; }
-  .grid.grid-cols-1.md\:grid-cols-2.gap-4 { grid-template-columns: 1fr !important; }
-  input, button { max-width: 100%; }
-  .mt-6.text-center > button { width: 100%; font-size: 1rem; padding: 0.75rem; }
+  .merchant-list {
+    padding: 16px;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .title {
+    font-size: 24px;
+  }
+  .table-th, .table-td {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+  .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn-edit, .btn-suspend, .btn-unsuspend, .btn-delete {
+    justify-content: center;
+  }
 }
 </style>

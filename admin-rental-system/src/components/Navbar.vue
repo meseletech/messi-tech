@@ -20,11 +20,7 @@
           </select>
         </div>
         <div class="dropdown-item">
-          <label>Theme:</label>
-          <select v-model="theme" @change="onThemeChange">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
+          <ThemeSwitcher :theme="theme" @update-theme="onThemeChange" />
         </div>
         <button class="logout-btn" @click="handleLogout">{{ $t('actions.logout') }}</button>
       </div>
@@ -36,8 +32,9 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import ThemeSwitcher from './ThemeSwitcher.vue';
 
-const emit = defineEmits(['toggle-sidebar']);
+const emit = defineEmits(['toggle-sidebar', 'update-theme']);
 const router = useRouter();
 const { locale } = useI18n();
 const theme = ref(localStorage.getItem('theme') || 'light');
@@ -62,9 +59,10 @@ function onLocaleChange() {
   localStorage.setItem('locale', locale.value);
 }
 
-function onThemeChange() {
-  document.documentElement.className = theme.value;
-  localStorage.setItem('theme', theme.value);
+function onThemeChange(newTheme) {
+  theme.value = newTheme;
+  emit('update-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
 }
 </script><style scoped>
 .navbar {

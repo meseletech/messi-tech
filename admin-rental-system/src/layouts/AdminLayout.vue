@@ -45,9 +45,11 @@ function handleResize() {
 onMounted(() => {
   window.addEventListener('resize', handleResize);
   handleResize();
+  document.documentElement.className = theme.value;
 });
 
 watch(theme, (newTheme) => {
+  document.documentElement.className = newTheme;
   localStorage.setItem("theme", newTheme);
 });
 </script>

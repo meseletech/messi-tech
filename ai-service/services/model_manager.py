@@ -46,8 +46,9 @@ def train_fraud_model(X):
     pipeline = Pipeline([
         ("scaler", StandardScaler()),
         ("model", IsolationForest(
-            n_estimators=150,
-            contamination=0.1,
+            n_estimators=200,
+            contamination=0.05,
+            max_samples="auto",
             random_state=42
         ))
     ])

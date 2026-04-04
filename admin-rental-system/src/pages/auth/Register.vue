@@ -19,8 +19,8 @@
           </button>
         </div>
 
-        <input v-model="phonenumber" type="text" placeholder="Phone Number" required />
-        <input v-model="address" type="text" placeholder="Address" required />
+        <input v-model="phonenumber" type="text" :placeholder="$t('phone')" required />
+        <input v-model="address" type="text" :placeholder="$t('address')" required />
 
         <button type="submit" :disabled="loading" class="submit-btn">
           <span v-if="loading" class="progress-bar"></span>
@@ -28,7 +28,7 @@
         </button>
 
         <p class="switch-link" @click="goToLogin">
-          {{ $t('already Have Account') }} <strong>{{ $t('Log in') }}</strong>
+          {{ $t('already_have_account') }} <strong>{{ $t('log_in') }}</strong>
         </p>
       </form>
 

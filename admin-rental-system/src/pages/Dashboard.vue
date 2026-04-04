@@ -1,49 +1,99 @@
 <template>
   <div class="dashboard">
-    <!-- AI ALERT -->
-    <div v-if="aiAlertMessage" class="ai-alert">
-      🚨 {{ aiAlertMessage }}
+    <div class="header">
+      <h1 class="title">{{ t('dashboard.title') }}</h1>
+      <p class="subtitle">{{ t('dashboard.subtitle') }}</p>
     </div>
 
-    <!-- AI CONTROLS -->
-    <div class="ai-controls">
-      <button class="ai-btn" @click="handleRetrainFraud" :disabled="retrainingFraud">
-        {{ retrainingFraud ? 'Retraining Fraud...' : 'Retrain Fraud Model' }}
-      </button>
-      <button class="ai-btn" @click="handleRetrainMerchant" :disabled="retrainingMerchant">
-        {{ retrainingMerchant ? 'Retraining Merchant...' : 'Retrain Merchant Model' }}
-      </button>
-      <button class="ai-btn refresh-btn" @click="fetchAIMetrics">Refresh AI Data</button>
+    <!-- AI ALERT -->
+    <div v-if="aiAlertMessage" class="ai-alert">
+      <ExclamationTriangleIcon class="icon-sm" />
+      {{ aiAlertMessage }}
+    </div>
+
+   
+    <div class="ai-summary-grid">
+      <div class="stat-card yellow-card">
+        <ExclamationTriangleIcon class="card-icon" />
+        <p>{{ t('dashboard.fraudAlerts') }}</p>
+        <h3>{{ aiAlerts.length }}</h3>
+      </div>
+      <div class="stat-card red-card">
+        <ShieldCheckIcon class="card-icon" />
+        <p>{{ t('dashboard.highRiskMerchants') }}</p>
+        <h3>{{ highRiskMerchantCount }}</h3>
+      </div>
+      <div class="stat-card green-card">
+        <UserGroupIcon class="card-icon" />
+        <p>{{ t('dashboard.merchantRiskItems') }}</p>
+        <h3>{{ merchantRiskCount }}</h3>
+      </div>
     </div>
 
     <!-- TOTAL CARDS -->
     <div class="stats-grid">
       <div class="stat-card light-card" @click="toggleSection('merchants')">
-        <p>Total Merchants</p>
+        <UserGroupIcon class="card-icon" />
+        <p>{{ t('dashboard.totalMerchants') }}</p>
         <h3>{{ totalMerchants }}</h3>
       </div>
       <div class="stat-card light-card" @click="toggleSection('customers')">
-        <p>Total Customers</p>
+        <UserIcon class="card-icon" />
+        <p>{{ t('dashboard.totalCustomers') }}</p>
         <h3>{{ totalCustomers }}</h3>
       </div>
       <div class="stat-card light-card" @click="showBookings()">
-        <p>Total Bookings</p>
+        <DocumentTextIcon class="card-icon" />
+        <p>{{ t('dashboard.totalBookings') }}</p>
         <h3>{{ totalBookings }}</h3>
       </div>
       <div class="stat-card yellow-card" @click="fetchAIMetrics">
-        <p>AI Risk Avg</p>
+        <ExclamationTriangleIcon class="card-icon" />
+        <p>{{ t('dashboard.aiRiskAvg') }}</p>
         <h3>{{ aiRiskAvg }}%</h3>
+      </div>
+    </div>
+
+    <!-- AI DETAILS -->
+    <div class="ai-details" v-if="aiAlerts.length || merchantRisks.length">
+      <div class="ai-widget">
+        <h3>{{ t('dashboard.fraudAlertsTitle') }}</h3>
+        <div v-if="aiAlerts.length" class="ai-list">
+          <div v-for="alert in aiAlerts.slice(0, 6)" :key="alert.userId + alert.riskReason" class="ai-list-item">
+            <span class="badge">{{ alert.role.toUpperCase() }}</span>
+            <div>
+              <p>{{ alert.message || (alert.role === 'merchant' ? 'Merchant' : 'User') + ' flagged' }}</p>
+              <small>{{ alert.riskReason }} · score {{ alert.riskScore || 0 }}</small>
+            </div>
+          </div>
+        </div>
+        <p v-else class="ai-empty">{{ t('dashboard.noFraudAlerts') }}</p>
+      </div>
+      <div class="ai-widget">
+        <h3>{{ t('dashboard.merchantRiskTitle') }}</h3>
+        <div v-if="merchantRisks.length" class="ai-list">
+          <div v-for="merchant in merchantRisks.slice(0, 6)" :key="merchant.merchantId" class="ai-list-item">
+            <span class="badge">{{ merchant.riskLevel }}</span>
+            <div>
+              <p>{{ t('dashboard.merchantLabel') }} {{ merchant.name || merchant.merchantId }}</p>
+              <small>{{ t('dashboard.riskScore') }} {{ Math.round((merchant.riskProbability || 0) * 100) / 100 }}</small>
+            </div>
+          </div>
+        </div>
+        <p v-else class="ai-empty">{{ t('dashboard.noMerchantRisk') }}</p>
       </div>
     </div>
 
     <!-- MERCHANTS SECTION -->
     <div v-if="activeSection === 'merchants'" class="sub-grid">
       <div class="stat-card green-card" @click="showList('merchants','active')">
-        <p>Active Merchants</p>
+        <UserGroupIcon class="card-icon" />
+        <p>{{ t('dashboard.activeMerchants') }}</p>
         <h3>{{ activeMerchants }}</h3>
       </div>
       <div class="stat-card red-card" @click="showList('merchants','suspended')">
-        <p>Suspended Merchants</p>
+        <ExclamationTriangleIcon class="card-icon" />
+        <p>{{ t('dashboard.suspendedMerchants') }}</p>
         <h3>{{ suspendedMerchants }}</h3>
       </div>
     </div>
@@ -51,11 +101,13 @@
     <!-- CUSTOMERS SECTION -->
     <div v-if="activeSection === 'customers'" class="sub-grid">
       <div class="stat-card green-card" @click="showList('customers','active')">
-        <p>Active Customers</p>
+        <UserIcon class="card-icon" />
+        <p>{{ t('dashboard.activeCustomers') }}</p>
         <h3>{{ activeCustomers }}</h3>
       </div>
       <div class="stat-card red-card" @click="showList('customers','suspended')">
-        <p>Suspended Customers</p>
+        <ExclamationTriangleIcon class="card-icon" />
+        <p>{{ t('dashboard.suspendedCustomers') }}</p>
         <h3>{{ suspendedCustomers }}</h3>
       </div>
     </div>
@@ -113,9 +165,9 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Status</th>
+            <th>{{ t('dashboard.name') }}</th>
+            <th>{{ t('dashboard.email') }}</th>
+            <th>{{ t('dashboard.status') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -124,7 +176,7 @@
             <td>{{ item.email }}</td>
             <td>
               <span :class="item.isActive ? 'active-badge' : 'suspended-badge'">
-                {{ item.isActive ? 'Active' : 'Suspended' }}
+                {{ item.isActive ? t('dashboard.active') : t('dashboard.suspended') }}
               </span>
             </td>
           </tr>
@@ -135,14 +187,14 @@
     <!-- BOOKING MODAL -->
     <div v-if="selectedBooking" class="modal-overlay" @click.self="selectedBooking = null">
       <div class="modal">
-        <h3>Booking Details</h3>
+        <h3>{{ t('dashboard.bookingDetails') }}</h3>
         <img :src="selectedBooking.image || defaultImage" class="modal-image"/>
-        <p><strong>Customer:</strong> {{ selectedBooking.customerName }}</p>
-        <p><strong>Merchant:</strong> {{ selectedBooking.merchantName }}</p>
-        <p><strong>Status:</strong> {{ selectedBooking.status }}</p>
-        <p><strong>AI Risk:</strong> {{ selectedBooking.aiRiskScore || 0 }}%</p>
-        <p><strong>Date:</strong> {{ formatDate(selectedBooking.createdAt) }}</p>
-        <button class="close-btn" @click="selectedBooking = null"> Close </button>
+        <p><strong>{{ t('dashboard.customer') }}:</strong> {{ selectedBooking.customerName }}</p>
+        <p><strong>{{ t('dashboard.merchant') }}:</strong> {{ selectedBooking.merchantName }}</p>
+        <p><strong>{{ t('dashboard.bookingStatus') }}:</strong> {{ selectedBooking.status }}</p>
+        <p><strong>{{ t('dashboard.aiRisk') }}:</strong> {{ selectedBooking.aiRiskScore || 0 }}%</p>
+        <p><strong>{{ t('dashboard.date') }}:</strong> {{ formatDate(selectedBooking.createdAt) }}</p>
+        <button class="close-btn" @click="selectedBooking = null"> <XMarkIcon class="icon-sm" /> {{ t('dashboard.close') }} </button>
       </div>
     </div>
   </div>
@@ -153,9 +205,12 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import Chart from "chart.js/auto";
 import { getAIAnalytics, getFraudDetection, getMerchantRisk, retrainFraudModel, retrainMerchantModel } from "@/services/aiService";
 import axios from "axios";
+import { UserGroupIcon, UserIcon, DocumentTextIcon, ExclamationTriangleIcon, ShieldCheckIcon, XMarkIcon } from "@heroicons/vue/24/outline";
+import { useI18n } from 'vue-i18n';
 
 export default {
   setup() {
+    const { t } = useI18n();
     const activeSection = ref(null);
     const selectedList = ref([]);
     const listTitle = ref("");
@@ -173,6 +228,10 @@ export default {
     const totalBookings = ref(0);
     const bookingStatuses = ref({});
     const aiRiskAvg = ref(0);
+    const aiAlerts = ref([]);
+    const merchantRisks = ref([]);
+    const merchantRiskCount = ref(0);
+    const highRiskMerchantCount = ref(0);
     const aiAlertMessage = ref(null);
     const retrainingFraud = ref(false);
     const retrainingMerchant = ref(false);
@@ -283,6 +342,18 @@ export default {
         const fraud = await getFraudDetection();
         const risk = await getMerchantRisk();
 
+        merchantRisks.value = Array.isArray(risk)
+          ? risk
+          : risk?.merchantRisk || [];
+        merchantRisks.value.forEach(mr => {
+          const merchant = merchantsData.value.find(m => m._id === mr.merchantId);
+          if (merchant) mr.name = merchant.name || merchant.fullName;
+        });
+        merchantRiskCount.value = merchantRisks.value.length;
+        highRiskMerchantCount.value = merchantRisks.value.filter((m) => m.riskLevel === "HIGH").length;
+
+        aiAlerts.value = fraud?.fraudCases || [];
+
         // Merge AI risk
         if (analytics?.bookings?.length) {
           const map = {};
@@ -310,11 +381,16 @@ export default {
 
         // Fraud alerts
         const totalFrauds = fraud?.totalFrauds || 0;
-        aiAlertMessage.value = totalFrauds > 0 ? `⚠️ Fraud detected: ${totalFrauds} suspicious cases!` : null;
+        if (totalFrauds > 0) {
+          aiAlertMessage.value = `⚠️ Fraud detected: ${totalFrauds} suspicious cases!`;
+        } else if (highRiskMerchantCount.value > 0) {
+          aiAlertMessage.value = `⚠️ ${highRiskMerchantCount.value} high-risk merchants detected.`;
+        } else {
+          aiAlertMessage.value = null;
+        }
 
-        // Update current bookings chart counts (again)
         const counts = {};
-        bookingsData.value.forEach(b => {
+        bookingsData.value.forEach((b) => {
           const status = getBookingStatus(b).toLowerCase() || "unknown";
           counts[status] = (counts[status] || 0) + 1;
         });
@@ -399,18 +475,27 @@ export default {
       activeSection, toggleSection, showBookings, showList, totalMerchants, activeMerchants, suspendedMerchants,
       totalCustomers, activeCustomers, suspendedCustomers, totalBookings, bookingStatuses,
       filteredBookings, filterBookings, resetFilter, selectedList, listTitle, formatDate,
-      defaultImage, openModal, selectedBooking, aiAlertMessage, aiRiskAvg, fetchAIMetrics, riskClass,
-      retrainingFraud, retrainingMerchant, handleRetrainFraud, handleRetrainMerchant
+      defaultImage, openModal, selectedBooking, aiAlertMessage, aiRiskAvg, aiAlerts, merchantRisks,
+      merchantRiskCount, highRiskMerchantCount, fetchAIMetrics, riskClass,
+      retrainingFraud, retrainingMerchant, handleRetrainFraud, handleRetrainMerchant,
+      UserGroupIcon, UserIcon, DocumentTextIcon, ExclamationTriangleIcon, ShieldCheckIcon, XMarkIcon,
+      t
     };
   }
 };
 </script>
 <style scoped>
 /* ===== BASE LAYOUT ===== */
-.dashboard { padding: 24px; background: #f8fafc; min-height: 100vh; }
-.title { font-size: 28px; font-weight: 700; margin-bottom: 24px; }
+.dashboard { padding: 24px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); min-height: 100vh; }
+.dark .dashboard { background: linear-gradient(135deg, #1f2937 0%, #111827 100%); }
+.header { margin-bottom: 32px; text-align: center; }
+.title { font-size: 32px; font-weight: 800; margin-bottom: 8px; color: #1f2937; }
+.dark .title { color: #f9fafb; }
+.subtitle { font-size: 16px; color: #6b7280; margin: 0; }
+.dark .subtitle { color: #9ca3af; }
 /* ===== AI ALERT ===== */
-.ai-alert { background: #fee2e2; color: #991b1b; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; }
+.ai-alert { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); }
+.dark .ai-alert { background: linear-gradient(135deg, #451a1a 0%, #7f1d1d 100%); color: #fca5a5; }
 /* ===== AI CONTROLS ===== */
 .ai-controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
 .ai-btn { background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
@@ -423,12 +508,19 @@ export default {
 /* ===== GRID SYSTEM ===== */
 .stats-grid, .sub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 24px; }
 /* ===== CARDS ===== */
-.stat-card { background: #ffffff; border-radius: 14px; padding: 20px; box-shadow: 0 6px 18px rgba(0,0,0,0.05); cursor: pointer; transition: 0.25s ease; text-align: center; }
-.stat-card:hover { transform: translateY(-5px); }
-.green-card { border-left: 6px solid #22c55e; }
-.red-card { border-left: 6px solid #ef4444; }
-.yellow-card { border-left: 6px solid #f59e0b; }
-.light-card { border-left: 6px solid #3b82f6; }
+.stat-card { background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s ease; text-align: center; position: relative; border: 1px solid #e5e7eb; }
+.dark .stat-card { background: linear-gradient(135deg, #374151 0%, #1f2937 100%); border: 1px solid #4b5563; }
+.stat-card:hover { transform: translateY(-8px); box-shadow: 0 16px 40px rgba(0,0,0,0.15); }
+.card-icon { width: 32px; height: 32px; margin: 0 auto 8px; color: #6b7280; }
+.icon-sm { width: 16px; height: 16px; margin-right: 8px; }
+.green-card { border-top: 6px solid #22c55e; }
+.green-card .card-icon { color: #22c55e; }
+.red-card { border-top: 6px solid #ef4444; }
+.red-card .card-icon { color: #ef4444; }
+.yellow-card { border-top: 6px solid #f59e0b; }
+.yellow-card .card-icon { color: #f59e0b; }
+.light-card { border-top: 6px solid #3b82f6; }
+.light-card .card-icon { color: #3b82f6; }
 /* ===== BOOKINGS GRID ===== */
 .booking-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
 .booking-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.06); transition: 0.25s ease; cursor: pointer; }
@@ -451,15 +543,30 @@ export default {
 /* ===== TABLE ===== */
 .list-section { margin-top: 30px; overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; background: white; min-width: 500px; }
+.dark .data-table { background: #1f2937; color: #f9fafb; }
 .data-table th, .data-table td { padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+.dark .data-table th, .dark .data-table td { border-bottom: 1px solid #4b5563; }
 .active-badge { background: #dcfce7; color: #166534; padding: 5px 12px; border-radius: 12px; }
+.dark .active-badge { background: #14532d; color: #bbf7d0; }
 .suspended-badge { background: #fee2e2; color: #991b1b; padding: 5px 12px; border-radius: 12px; }
+.dark .suspended-badge { background: #7f1d1d; color: #fca5a5; }
 /* ===== CHART ===== */
 .chart-section { background: white; padding: 20px; border-radius: 14px; margin-bottom: 20px; overflow-x: auto; }
 .chart-title { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
+.ai-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 24px; }
+.ai-details { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 18px; margin-bottom: 24px; }
+.ai-widget { background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
+.dark .ai-widget { background: linear-gradient(135deg, #374151 0%, #1f2937 100%); border: 1px solid #4b5563; }
+.ai-widget h3 { margin: 0 0 12px; font-size: 16px; }
+.ai-list { display: grid; gap: 12px; }
+.ai-list-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 12px; }
+.ai-list-item .badge { padding: 6px 10px; border-radius: 999px; background: #e0f2fe; color: #0369a1; font-size: 11px; font-weight: 700; }
+.ai-empty { margin: 0; color: #6b7280; }
 /* ===== MODAL ===== */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; justify-content: center; align-items: center; padding: 20px; z-index: 999; }
+.dark .modal-overlay { background: rgba(0,0,0,0.75); }
 .modal { background: white; border-radius: 16px; width: 100%; max-width: 450px; padding: 25px; animation: fadeIn 0.3s ease; }
+.dark .modal { background: #1f2937; color: #f9fafb; }
 .modal-image { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }
 .close-btn { margin-top: 15px; padding: 10px 18px; border-radius: 10px; background: #3b82f6; color: white; border: none; cursor: pointer; }
 .close-btn:hover { background: #2563eb; }
@@ -479,6 +586,5 @@ export default {
   .booking-image { height: 160px; }
   .modal-image { height: 160px; }
 }
-/* ===== ANIMATION ===== */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.stats-grid, .sub-grid, .ai-summary-grid, .ai-details { animation: fadeInUp 0.6s ease-out; }
 </style>
