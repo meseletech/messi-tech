@@ -42,11 +42,11 @@
         <p>{{ t('dashboard.totalCustomers') }}</p>
         <h3>{{ totalCustomers }}</h3>
       </div>
-      <div class="stat-card light-card" @click="showBookings()">
+      <button type="button" class="stat-card light-card card-button" @click="showBookings">
         <DocumentTextIcon class="card-icon" />
         <p>{{ t('dashboard.totalBookings') }}</p>
         <h3>{{ totalBookings }}</h3>
-      </div>
+      </button>
       <div class="stat-card yellow-card" @click="fetchAIMetrics">
         <ExclamationTriangleIcon class="card-icon" />
         <p>{{ t('dashboard.aiRiskAvg') }}</p>
@@ -535,6 +535,7 @@ export default {
 /* ===== CARDS ===== */
 .stat-card { background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.3s ease; text-align: center; position: relative; border: 1px solid #e5e7eb; }
 .dark .stat-card { background: linear-gradient(135deg, #374151 0%, #1f2937 100%); border: 1px solid #4b5563; }
+.card-button { width: 100%; appearance: none; -webkit-appearance: none; font: inherit; color: inherit; background: inherit; }
 .stat-card:hover { transform: translateY(-8px); box-shadow: 0 16px 40px rgba(0,0,0,0.15); }
 .card-icon { width: 32px; height: 32px; margin: 0 auto 8px; color: #6b7280; }
 .icon-sm { width: 16px; height: 16px; margin-right: 8px; }
