@@ -139,7 +139,7 @@
       <!-- Chart -->
       <div class="chart-section" ref="bookingChartSection">
         <h4 class="chart-title">Booking Risk Levels</h4>
-        <canvas id="bookingChart"></canvas>
+        <canvas ref="bookingChartCanvas"></canvas>
       </div>
 
       <!-- Booking Cards -->
@@ -239,6 +239,7 @@ export default {
     const API_ORIGIN = "https://lmgtech-e1q0.onrender.com";
     const chartInstance = ref(null);
     const bookingChartSection = ref(null);
+    const bookingChartCanvas = ref(null);
 
     const toggleSection = (section) => {
       if (section === "bookings") {
@@ -366,11 +367,30 @@ export default {
     const openModal = (booking) => { selectedBooking.value = booking; };
     const riskClass = (score) => score >= 70 ? "high-risk" : score >= 40 ? "medium-risk" : "low-risk";
 
+    const destroyChart = () => {
+      if (!chartInstance.value) return;
+      try {
+        if (typeof chartInstance.value.stop === "function") {
+          chartInstance.value.stop();
+        }
+        chartInstance.value.destroy();
+      } catch (e) {
+        console.warn("Chart cleanup warning:", e);
+      } finally {
+        chartInstance.value = null;
+      }
+    };
+
     const createChart = () => {
-      nextTick(() => {
-        const ctx = document.getElementById("bookingChart");
-        if (!ctx) return;
-        if (chartInstance.value) chartInstance.value.destroy();
+      if (activeSection.value !== "bookings") return;
+
+      const canvas = bookingChartCanvas.value;
+      if (!canvas || !canvas.isConnected) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      destroyChart();
 
         const chartLabels = filteredBookings.value.map((booking, index) => {
           return booking.customerName || booking.merchantName || `Booking ${index + 1}`;
@@ -380,7 +400,7 @@ export default {
           return Number.isFinite(parsed) ? parsed : 0;
         });
 
-        chartInstance.value = new Chart(ctx, {
+      chartInstance.value = new Chart(ctx, {
           type: "bar",
           data: {
             labels: chartLabels,
@@ -391,6 +411,7 @@ export default {
             }]
           },
           options: {
+            animation: false,
             scales: {
               y: {
                 beginAtZero: true,
@@ -405,7 +426,6 @@ export default {
               legend: { display: false }
             }
           }
-        });
       });
     };
 
@@ -549,14 +569,13 @@ export default {
 
     watch(activeSection, (section) => {
       if (section === "bookings") {
-        createChart();
-      } else if (chartInstance.value) {
-        chartInstance.value.destroy();
-        chartInstance.value = null;
+        nextTick(() => createChart());
+      } else {
+        destroyChart();
       }
     });
 
-    onUnmounted(() => { if(chartInstance.value) chartInstance.value.destroy(); });
+    onUnmounted(() => { destroyChart(); });
 
     return {
       activeSection, toggleSection, showBookings, showList, totalMerchants, activeMerchants, suspendedMerchants,
@@ -566,7 +585,7 @@ export default {
       merchantRiskCount, highRiskMerchantCount, fetchAIMetrics, riskClass,
       retrainingFraud, retrainingMerchant, handleRetrainFraud, handleRetrainMerchant,
       UserGroupIcon, UserIcon, DocumentTextIcon, ExclamationTriangleIcon, ShieldCheckIcon, XMarkIcon,
-      t, bookingChartSection
+      t, bookingChartSection, bookingChartCanvas
     };
   }
 };
