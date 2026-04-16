@@ -1,17 +1,26 @@
 <template>
   <div class="merchant-list">
-    <!-- Header -->
     <div class="header">
       <div class="header-content">
-        <p class="subtitle">{{ t('merchantList.subtitle') }}</p>
+        <p class="subtitle">Merchant Operations</p>
         <h1 class="title">{{ t('merchantList.title') }}</h1>
       </div>
-      <button @click="fetchMerchants" class="refresh-btn">
-        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        {{ t('actions.refresh') }}
-      </button>
+      <div class="header-actions">
+        <div class="summary-chip">
+          <span>Total</span>
+          <strong>{{ filteredMerchants.length }}</strong>
+        </div>
+        <div class="summary-chip">
+          <span>Active</span>
+          <strong>{{ activeMerchants }}</strong>
+        </div>
+        <button @click="fetchMerchants" class="refresh-btn">
+          <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          {{ t('actions.refresh') }}
+        </button>
+      </div>
     </div>
 
     <!-- Search Bar -->
@@ -34,8 +43,7 @@
       <p>{{ t('merchantList.loading') }}</p>
     </div>
 
-    <!-- Merchant Table -->
-    <div class="table-container">
+    <div class="table-container desktop-table">
       <table class="data-table">
         <thead class="table-header">
           <tr>
@@ -94,6 +102,41 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="mobile-cards">
+      <div
+        v-for="merchant in filteredMerchants"
+        :key="merchant._id"
+        class="merchant-card"
+      >
+        <div class="merchant-card-head">
+          <div>
+            <div class="card-title">{{ merchant.fullName }}</div>
+            <div class="card-subtitle">{{ merchant.businessName }}</div>
+          </div>
+          <span :class="merchant.isActive ? 'status-active' : 'status-suspended'">
+            {{ merchant.isActive ? t('merchantList.active') : t('merchantList.suspended') }}
+          </span>
+        </div>
+        <div class="merchant-card-body">
+          <div><strong>{{ t('merchantList.email') }}:</strong> {{ merchant.email }}</div>
+          <div><strong>{{ t('merchantList.phone') }}:</strong> {{ merchant.phonenumber || '-' }}</div>
+          <div><strong>{{ t('merchantList.address') }}:</strong> {{ merchant.address || '-' }}</div>
+        </div>
+        <div class="merchant-card-actions">
+          <button @click="openEditModal(merchant)" class="btn-edit">
+            {{ t('actions.edit') }}
+          </button>
+          <button @click="openConfirmModal('toggle', merchant)" :class="merchant.isActive ? 'btn-suspend' : 'btn-unsuspend'">
+            {{ merchant.isActive ? t('actions.suspend') : t('actions.unsuspend') }}
+          </button>
+          <button @click="openConfirmModal('delete', merchant)" class="btn-delete">
+            {{ t('actions.delete') }}
+          </button>
+        </div>
+      </div>
+      <div v-if="!filteredMerchants.length" class="mobile-empty">{{ t('merchantList.empty') }}</div>
     </div>
 
     <!-- Add Merchant Button -->
@@ -226,7 +269,7 @@ const fetchMerchants = async () => {
 
   try {
     const token = localStorage.getItem('adminToken')
-    const { data } = await axios.get('https://lmgtech-4.onrender.com/merchant/all', {
+    const { data } = await axios.get('https://lmgtech-e1q0.onrender.com/merchant/all', {
       headers: { Authorization: `Bearer ${token}` },
     })
 
@@ -300,9 +343,9 @@ const submitAddEditMerchant = async () => {
     const token = localStorage.getItem('adminToken')
     let response
     if (showEditMerchant.value) {
-      response = await axios.put(`https://lmgtech-4.onrender.com/merchant/admin/update/${form.value._id}`, formData, { headers: { Authorization: `Bearer ${token}`, 'accept-language': locale.value } })
+      response = await axios.put(`https://lmgtech-e1q0.onrender.com/merchant/admin/update/${form.value._id}`, formData, { headers: { Authorization: `Bearer ${token}`, 'accept-language': locale.value } })
     } else {
-      response = await axios.post('https://lmgtech-4.onrender.com/merchant/register', formData, { headers: { Authorization: `Bearer ${token}`, 'accept-language': locale.value } })
+      response = await axios.post('https://lmgtech-e1q0.onrender.com/merchant/register', formData, { headers: { Authorization: `Bearer ${token}`, 'accept-language': locale.value } })
     }
 
     message.value = response.data.message || (showEditMerchant.value ? t('merchant.updated') : t('merchant.success'))
@@ -322,11 +365,11 @@ const confirmAction = async () => {
   const token = localStorage.getItem('adminToken')
   try {
     if (modalAction.value === 'delete') {
-      await axios.delete(`https://lmgtech-4.onrender.com/merchant/${merchantToActOn.value._id}`, { headers: { Authorization: `Bearer ${token}` } })
+      await axios.delete(`https://lmgtech-e1q0.onrender.com/merchant/${merchantToActOn.value._id}`, { headers: { Authorization: `Bearer ${token}` } })
       merchants.value = merchants.value.filter(m => m._id !== merchantToActOn.value._id)
     } else if (modalAction.value === 'toggle') {
       const updated = { isActive: !merchantToActOn.value.isActive }
-      await axios.put(`https://lmgtech-4.onrender.com/merchant/admin/update/${merchantToActOn.value._id}`, updated, { headers: { Authorization: `Bearer ${token}` } })
+      await axios.put(`https://lmgtech-e1q0.onrender.com/merchant/admin/update/${merchantToActOn.value._id}`, updated, { headers: { Authorization: `Bearer ${token}` } })
       merchantToActOn.value.isActive = !merchantToActOn.value.isActive
     }
   } catch (err) {
@@ -347,36 +390,40 @@ const filteredMerchants = computed(() => {
   )
 })
 
+const activeMerchants = computed(() => filteredMerchants.value.filter(m => m.isActive).length)
+
 onMounted(fetchMerchants)
 </script>
 
 <style scoped>
-/* ===== BASE LAYOUT ===== */
 .merchant-list {
   padding: 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(21, 101, 192, 0.1), transparent 36%),
+    radial-gradient(circle at 100% 100%, rgba(33, 125, 95, 0.12), transparent 42%),
+    #f6f9fc;
   min-height: 100vh;
+  color: #102a43;
 }
 .dark .merchant-list {
   background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
-/* ===== HEADER ===== */
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
+  align-items: flex-end;
+  margin-bottom: 20px;
   gap: 16px;
 }
 .header-content {
   flex: 1;
 }
 .title {
-  font-size: 32px;
+  font-size: clamp(1.5rem, 2.2vw, 2.1rem);
   font-weight: 800;
-  margin-bottom: 8px;
-  color: #1f2937;
+  margin-bottom: 2px;
+  color: #102a43;
 }
 .dark .title {
   color: #f9fafb;
@@ -385,38 +432,61 @@ onMounted(fetchMerchants)
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #6b7280;
+  color: #486581;
   margin: 0;
+  font-weight: 700;
 }
 .dark .subtitle {
   color: #9ca3af;
 }
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  min-width: 110px;
+  padding: 8px 12px;
+  border: 1px solid #d9e2ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 20px rgba(16, 42, 67, 0.07);
+}
+
+.summary-chip span {
+  display: block;
+  font-size: 12px;
+  color: #627d98;
+}
+
 .refresh-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 12px;
+  padding: 10px 16px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 18px rgba(13, 71, 161, 0.28);
 }
 .refresh-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(13, 71, 161, 0.34);
 }
 
-/* ===== SEARCH ===== */
 .search-container {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .search-wrapper {
   position: relative;
-  max-width: 400px;
+  max-width: 460px;
 }
 .search-icon {
   position: absolute;
@@ -429,13 +499,13 @@ onMounted(fetchMerchants)
 }
 .search-input {
   width: 100%;
-  padding: 12px 16px 12px 44px;
-  border: 2px solid #e5e7eb;
+  padding: 11px 14px 11px 44px;
+  border: 1px solid #bcccdc;
   border-radius: 12px;
   background: white;
   font-size: 14px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(16, 42, 67, 0.06);
 }
 .dark .search-input {
   background: #374151;
@@ -444,11 +514,10 @@ onMounted(fetchMerchants)
 }
 .search-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #1565c0;
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
 }
 
-/* ===== LOADING ===== */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -461,13 +530,12 @@ onMounted(fetchMerchants)
   color: #9ca3af;
 }
 
-/* ===== TABLE ===== */
 .table-container {
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-  border-radius: 16px;
+  background: #fff;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 14px 28px rgba(16, 42, 67, 0.08);
+  border: 1px solid #d9e2ec;
   margin-bottom: 24px;
 }
 .dark .table-container {
@@ -479,35 +547,38 @@ onMounted(fetchMerchants)
   border-collapse: collapse;
 }
 .table-header {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  background: #f0f4f8;
 }
 .dark .table-header {
   background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
 }
 .table-th {
-  padding: 16px 20px;
+  padding: 12px 16px;
   text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #e5e7eb;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #334e68;
+  border-bottom: 1px solid #d9e2ec;
 }
 .dark .table-th {
   color: #f9fafb;
   border-bottom-color: #4b5563;
 }
 .table-row {
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 .table-row:hover {
-  background: rgba(59, 130, 246, 0.05);
+  background: #f8fbff;
 }
 .dark .table-row:hover {
   background: rgba(59, 130, 246, 0.1);
 }
 .table-td {
-  padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  color: #374151;
+  padding: 12px 16px;
+  border-bottom: 1px solid #edf2f7;
+  color: #243b53;
 }
 .dark .table-td {
   border-bottom-color: #4b5563;
@@ -515,13 +586,13 @@ onMounted(fetchMerchants)
 }
 .status-active {
   display: inline-block;
-  padding: 6px 12px;
+  padding: 5px 11px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: #dcfce7;
+  background: #e3f9ec;
   color: #166534;
-  border: 1px solid #bbf7d0;
+  border: 1px solid #c4f0d6;
 }
 .dark .status-active {
   background: #14532d;
@@ -530,13 +601,13 @@ onMounted(fetchMerchants)
 }
 .status-suspended {
   display: inline-block;
-  padding: 6px 12px;
+  padding: 5px 11px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: #fee2e2;
+  background: #fee9e9;
   color: #991b1b;
-  border: 1px solid #fca5a5;
+  border: 1px solid #f8b2b2;
 }
 .dark .status-suspended {
   background: #7f1d1d;
@@ -545,94 +616,89 @@ onMounted(fetchMerchants)
 }
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
   flex-wrap: wrap;
 }
 .btn-edit {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 5px;
+  padding: 7px 10px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: #1565c0;
   color: white;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
 }
 .btn-edit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
 }
 .btn-suspend {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 5px;
+  padding: 7px 10px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: #d28d02;
   color: white;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
 }
 .btn-suspend:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
 }
 .btn-unsuspend {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 5px;
+  padding: 7px 10px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #1d7a46;
   color: white;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
 }
 .btn-unsuspend:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
 }
 .btn-delete {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 5px;
+  padding: 7px 10px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: #c12f2f;
   color: white;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
 }
 .btn-delete:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
 }
 .empty-row {
   text-align: center;
 }
 .empty-cell {
   padding: 48px;
-  color: #6b7280;
+  color: #627d98;
 }
 .dark .empty-cell {
   color: #9ca3af;
 }
 
-/* ===== ADD BUTTON ===== */
 .add-button-container {
   text-align: right;
 }
@@ -640,7 +706,7 @@ onMounted(fetchMerchants)
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  background: linear-gradient(135deg, #102a43 0%, #243b53 100%);
   color: white;
   border: none;
   padding: 14px 24px;
@@ -655,14 +721,13 @@ onMounted(fetchMerchants)
   color: #1f2937;
 }
 .add-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(31, 41, 55, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(16, 42, 67, 0.35);
 }
 .dark .add-btn:hover {
   box-shadow: 0 8px 20px rgba(249, 250, 251, 0.2);
 }
 
-/* ===== ICONS ===== */
 .icon-sm {
   width: 16px;
   height: 16px;
@@ -672,7 +737,6 @@ onMounted(fetchMerchants)
   height: 14px;
 }
 
-/* ===== LOADER ===== */
 .loader {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #3b82f6;
@@ -691,7 +755,119 @@ onMounted(fetchMerchants)
   100% { transform: rotate(360deg); }
 }
 
-/* ===== RESPONSIVE ===== */
+.mobile-cards {
+  display: none;
+  margin-bottom: 20px;
+}
+
+.merchant-card {
+  background: #fff;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 10px 20px rgba(16, 42, 67, 0.06);
+}
+
+.merchant-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-weight: 700;
+}
+
+.card-subtitle {
+  color: #627d98;
+  font-size: 13px;
+}
+
+.merchant-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.merchant-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.merchant-card-actions .btn-delete {
+  grid-column: 1 / -1;
+}
+
+.mobile-empty {
+  text-align: center;
+  color: #627d98;
+  padding: 18px;
+}
+
+.form-input {
+  width: 100%;
+  border: 1px solid #d1d9e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #1565c0;
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: #486581;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-submit {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  background: #1565c0;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loader-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
 @media (max-width: 768px) {
   .merchant-list {
     padding: 16px;
@@ -700,9 +876,23 @@ onMounted(fetchMerchants)
     flex-direction: column;
     align-items: flex-start;
   }
-  .title {
-    font-size: 24px;
+
+  .header-actions {
+    width: 100%;
   }
+
+  .summary-chip {
+    flex: 1 1 120px;
+  }
+
+  .desktop-table {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: block;
+  }
+
   .table-th, .table-td {
     padding: 12px 8px;
     font-size: 12px;
@@ -714,5 +904,20 @@ onMounted(fetchMerchants)
   .btn-edit, .btn-suspend, .btn-unsuspend, .btn-delete {
     justify-content: center;
   }
+
+  .add-button-container {
+    text-align: left;
+  }
+}
+
+@media (max-width: 460px) {
+  .merchant-card-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .merchant-card-actions .btn-delete {
+    grid-column: auto;
+  }
 }
 </style>
+

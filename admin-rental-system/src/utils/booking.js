@@ -1,7 +1,7 @@
 // src/utils/booking.js
 import axios from 'axios';
 
-const BASE_URL = 'https://lmgtech-4.onrender.com/customer';
+const BASE_URL = 'https://lmgtech-e1q0.onrender.com/customer';
 
 // Create axios instance for admin requests
 const adminApi = axios.create({
@@ -69,3 +69,4 @@ export const uploadPaymentProof = (bookingId, file) => {
 
 // ✅ Add this line (Fix Vue default import error)
 export default adminApi;
+

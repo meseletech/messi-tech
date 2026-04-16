@@ -436,21 +436,21 @@ export default {
       if (!token) return alert("No token found! Please login.");
 
       // MERCHANTS
-      const merchantsRes = await axios.get("https://lmgtech-4.onrender.com/merchant/all", { headers: { Authorization: `Bearer ${token}` }});
+      const merchantsRes = await axios.get("https://lmgtech-e1q0.onrender.com/merchant/all", { headers: { Authorization: `Bearer ${token}` }});
       merchantsData.value = merchantsRes.data || [];
       totalMerchants.value = merchantsData.value.length;
       activeMerchants.value = merchantsData.value.filter(m=>m.isActive).length;
       suspendedMerchants.value = merchantsData.value.filter(m=>!m.isActive).length;
 
       // CUSTOMERS
-      const customersRes = await axios.get("https://lmgtech-4.onrender.com/customer/all", { headers: { Authorization: `Bearer ${token}` }});
+      const customersRes = await axios.get("https://lmgtech-e1q0.onrender.com/customer/all", { headers: { Authorization: `Bearer ${token}` }});
       customersData.value = customersRes.data?.customers || [];
       totalCustomers.value = customersData.value.length;
       activeCustomers.value = customersData.value.filter(c=>c.isActive).length;
       suspendedCustomers.value = customersData.value.filter(c=>!c.isActive).length;
 
       // BOOKINGS
-      const bookingsRes = await axios.get("https://lmgtech-4.onrender.com/customer/bookings/all", { headers: { Authorization: `Bearer ${token}` }});
+      const bookingsRes = await axios.get("https://lmgtech-e1q0.onrender.com/customer/bookings/all", { headers: { Authorization: `Bearer ${token}` }});
       bookingsData.value = bookingsRes.data?.bookings || [];
       filteredBookings.value = bookingsData.value;
       totalBookings.value = bookingsData.value.length;

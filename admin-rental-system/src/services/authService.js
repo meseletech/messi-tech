@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "https://lmgtech-4.onrender.com/admin"; // replace 3000 with your NestJS port
+const API_URL = "https://lmgtech-e1q0.onrender.com/admin"; // replace 3000 with your NestJS port
 
 // Admin login
 export const loginAdmin = async (payload) => {
@@ -20,3 +20,4 @@ export const registerAdmin = async (payload) => {
     },
   });
 };
+

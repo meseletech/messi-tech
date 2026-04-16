@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 // this is used to fetch the hosted backend
-const API_URL = 'https://lmgtech-4.onrender.com/admin'
+const API_URL = 'https://lmgtech-e1q0.onrender.com/admin'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -39,3 +39,4 @@ export const useAuthStore = defineStore('auth', {
     }
   }
 })
+

@@ -1,7 +1,7 @@
 import axios from "axios"
 
 // Request AI via hosted backend admin service
-const AI_BASE_URL = import.meta.env.VITE_AI_API_URL || "https://lmgtech-4.onrender.com/admin/ai"
+const AI_BASE_URL = import.meta.env.VITE_AI_API_URL || "https://lmgtech-e1q0.onrender.com/admin/ai"
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("adminToken") || localStorage.getItem("managerToken")

@@ -36,7 +36,7 @@
 <script>
 import HelpModal from '@/components/HelpModal.vue'
 
-const API_URL = 'https://lmgtech-4.onrender.com/admin'
+const API_URL = 'https://lmgtech-e1q0.onrender.com/admin'
 
 export default {
   name: 'Users',
@@ -195,3 +195,4 @@ h1 {
   }
 }
 </style>
+

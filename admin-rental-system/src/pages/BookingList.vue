@@ -1,18 +1,35 @@
 <template>
   <div class="wrap">
-    <h1 class="heading">{{ $t('bookingList.title') }}</h1>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Operations</p>
+        <h1 class="heading">{{ $t('bookingList.title') }}</h1>
+      </div>
+      <div class="stats">
+        <div class="stat-chip">
+          <span class="stat-label">Total</span>
+          <strong>{{ bookings.length }}</strong>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-label">Visible</span>
+          <strong>{{ filteredBookings.length }}</strong>
+        </div>
+      </div>
+    </div>
 
-    <div class="controls">
-      <input v-model="search" :placeholder="$t('bookings.searchPlaceholder')" class="input" />
-      <select v-model="statusFilter" class="input">
-        <option value="">{{ $t('bookings.statusFilter.all') }}</option>
-        <option value="PENDING">Pending</option>
-        <option value="ACCEPTED">Accepted</option>
-        <option value="DECLINED">Declined</option>
-        <option value="CONFIRMED">Confirmed</option>
-        <option value="CANCELLED">Cancelled</option>
-      </select>
-      <button @click="fetchBookings" class="btn">{{ $t('bookings.refresh') }}</button>
+    <div class="controls-card">
+      <div class="controls">
+        <input v-model="search" :placeholder="$t('bookings.searchPlaceholder')" class="input" />
+        <select v-model="statusFilter" class="input status-filter">
+          <option value="">{{ $t('bookings.statusFilter.all') }}</option>
+          <option value="PENDING">Pending</option>
+          <option value="ACCEPTED">Accepted</option>
+          <option value="DECLINED">Declined</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <button @click="fetchBookings" class="btn">{{ $t('bookings.refresh') }}</button>
+      </div>
     </div>
 
     <div v-if="loading" class="meta">{{ $t('bookings.loading') }}</div>
@@ -265,91 +282,179 @@ export default {
   mounted() { this.fetchBookings(); },
 };
 </script>
-<style scoped>.wrap {
-  max-width: 1100px;
-  margin: 24px auto;
-  padding: 16px;
-  font-family: Arial, sans-serif;
+<style scoped>
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  color: #102a43;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(21, 101, 192, 0.08), transparent 38%),
+    radial-gradient(circle at 100% 100%, rgba(55, 148, 110, 0.08), transparent 42%);
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #486581;
+  font-weight: 700;
 }
 
 .heading {
-  font-size: 22px;
-  font-weight: 700;
+  margin: 4px 0 0;
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+  font-weight: 800;
+}
+
+.stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  min-width: 120px;
+  background: #fff;
+  border: 1px solid #d9e2ec;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 24px rgba(16, 42, 67, 0.06);
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #627d98;
+}
+
+.controls-card {
+  background: #fff;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(16, 42, 67, 0.06);
+  padding: 12px;
   margin-bottom: 14px;
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.input,
+.input-small {
+  border: 1px solid #bcccdc;
+  background: #fff;
+  color: #102a43;
+  border-radius: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  min-width: 140px;
-  flex: 1 1 auto;
+  min-width: 180px;
+  padding: 10px 12px;
+  flex: 1 1 260px;
+}
+
+.status-filter {
+  flex: 0 0 210px;
 }
 
 .input-small {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
+  min-width: 140px;
+  padding: 8px 10px;
+}
+
+.input:focus,
+.input-small:focus {
+  outline: none;
+  border-color: #1565c0;
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.16);
+}
+
+.btn,
+.btn-danger {
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn {
-  padding: 8px 12px;
-  background: #2b7cff;
+  padding: 10px 14px;
   color: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  flex: 0 0 auto;
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  box-shadow: 0 8px 16px rgba(13, 71, 161, 0.3);
 }
 
 .btn-danger {
-  padding: 6px 10px;
-  background: #e74c3c;
+  padding: 8px 12px;
   color: #fff;
-  border-radius: 6px;
-  cursor: pointer;
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  box-shadow: 0 8px 16px rgba(183, 28, 28, 0.28);
 }
 
-.btn:hover, .btn-danger:hover {
-  opacity: 0.95;
+.btn:hover,
+.btn-danger:hover {
+  transform: translateY(-1px);
 }
 
 .meta {
   margin: 10px 0;
-  color: #666;
+  color: #486581;
 }
 
 .error {
   color: #b00020;
   margin: 10px 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* Table styles */
 .table-wrap {
   overflow-x: auto;
-  border: 1px solid #e6e6e6;
-  border-radius: 6px;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
   background: #fff;
+  box-shadow: 0 14px 28px rgba(16, 42, 67, 0.08);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px;
+  min-width: 960px;
 }
 
-.table th, .table td {
-  padding: 10px;
+.table th {
+  padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #f0f0f0;
+  font-size: 12px;
+  color: #334e68;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f0f4f8;
+  border-bottom: 1px solid #d9e2ec;
+}
+
+.table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.table tbody tr:hover {
+  background: #f8fbff;
 }
 
 .prop {
@@ -359,69 +464,67 @@ export default {
 }
 
 .thumb {
-  width: 60px;
-  height: 48px;
+  width: 64px;
+  height: 52px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 10px;
+  border: 1px solid #d9e2ec;
 }
 
 .prop-name {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .small {
   font-size: 12px;
-  color: #666;
+  color: #627d98;
 }
 
 .actions-cell {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-/* Mobile card view */
 .mobile-cards {
   display: none;
 }
 
 .card {
-  border: 1px solid #e6e6e6;
-  border-radius: 6px;
-  padding: 12px;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  padding: 14px;
   margin-bottom: 12px;
   background: #fff;
+  box-shadow: 0 10px 22px rgba(16, 42, 67, 0.06);
 }
 
 .card-header {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .card-body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
+  color: #243b53;
 }
 
 .card-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
-/* Modal */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
+  inset: 0;
+  background: rgba(12, 28, 44, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -431,16 +534,15 @@ export default {
 
 .modal {
   background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
+  padding: 22px;
+  border-radius: 14px;
+  width: 460px;
   max-width: 100%;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 24px 36px rgba(12, 28, 44, 0.24);
 }
 
 .modal h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
+  margin: 0 0 16px;
   font-size: 18px;
 }
 
@@ -448,11 +550,13 @@ export default {
   display: flex;
   flex-direction: column;
   margin-bottom: 12px;
+  gap: 6px;
 }
 
 .date-group {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  align-items: center;
   flex-wrap: wrap;
 }
 
@@ -460,13 +564,15 @@ export default {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
-/* ======================
-   MOBILE RESPONSIVENESS
-====================== */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .desktop-table {
     display: none;
   }
@@ -474,22 +580,22 @@ export default {
   .mobile-cards {
     display: block;
   }
+}
+
+@media (max-width: 768px) {
+  .wrap {
+    padding: 16px;
+  }
 
   .controls {
     flex-direction: column;
-    gap: 10px;
   }
 
-  .input, .input-small {
+  .input,
+  .status-filter,
+  .input-small {
     width: 100%;
-  }
-
-  /* Buttons in card actions on mobile */
-  .card-actions button {
-    flex: 0 0 auto;       /* prevent oversize */
-    max-width: 140px;     /* reasonable width */
-    padding: 6px 8px;     /* smaller padding */
-    font-size: 13px;
+    min-width: 0;
   }
 
   .card-header {
@@ -497,8 +603,8 @@ export default {
     align-items: flex-start;
   }
 
-  .card-body {
-    font-size: 13px;
+  .card-actions button {
+    flex: 1 1 48%;
   }
 
   .modal {
@@ -506,12 +612,9 @@ export default {
   }
 }
 
-/* Extra small screens */
 @media (max-width: 480px) {
   .card-actions button {
-    flex: 1 1 100%;       /* stack buttons vertically */
-    max-width: 100%;
+    flex: 1 1 100%;
   }
 }
-
 </style>

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Set your backend base URL
-const BASE_URL = 'https://lmgtech-4.onrender.com/admin'; // Change if your NestJS runs on a different port
+const BASE_URL = 'https://lmgtech-e1q0.onrender.com/admin'; // Change if your NestJS runs on a different port
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -20,3 +20,4 @@ api.interceptors.request.use(config => {
 }, error => {
   return Promise.reject(error);
 });
+
