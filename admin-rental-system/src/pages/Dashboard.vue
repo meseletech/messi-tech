@@ -137,7 +137,7 @@
       </div>
 
       <!-- Chart -->
-      <div class="chart-section">
+      <div class="chart-section" ref="bookingChartSection">
         <h4 class="chart-title">Booking Risk Levels</h4>
         <canvas id="bookingChart"></canvas>
       </div>
@@ -237,21 +237,25 @@ export default {
     const retrainingMerchant = ref(false);
     const defaultImage = "https://via.placeholder.com/300x200.png?text=No+Image";
     const chartInstance = ref(null);
+    const bookingChartSection = ref(null);
 
     const toggleSection = (section) => {
+      if (section === "bookings") {
+        showBookings();
+        return;
+      }
+
       activeSection.value = activeSection.value === section ? null : section;
       selectedList.value = [];
-      if (section === "bookings") {
-        filteredBookings.value = bookingsData.value;
-        nextTick(() => createChart());
-      }
     };
 
-    const showBookings = () => {
+    const showBookings = async () => {
       activeSection.value = "bookings";
       selectedList.value = [];
       filteredBookings.value = bookingsData.value;
-      nextTick(() => createChart());
+      await nextTick();
+      createChart();
+      bookingChartSection.value?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
     const showList = (type, status) => {
@@ -290,9 +294,13 @@ export default {
 
     const filterBookings = (status) => {
       filteredBookings.value = bookingsData.value.filter(b => getBookingStatus(b).toLowerCase() === status);
+      createChart();
     };
 
-    const resetFilter = () => { filteredBookings.value = bookingsData.value; };
+    const resetFilter = () => {
+      filteredBookings.value = bookingsData.value;
+      createChart();
+    };
     const openModal = (booking) => { selectedBooking.value = booking; };
     const riskClass = (score) => score >= 70 ? "high-risk" : score >= 40 ? "medium-risk" : "low-risk";
 
@@ -305,7 +313,10 @@ export default {
         const chartLabels = filteredBookings.value.map((booking, index) => {
           return booking.customerName || booking.merchantName || `Booking ${index + 1}`;
         });
-        const chartData = filteredBookings.value.map((booking) => Number(booking.aiRiskScore || 0));
+        const chartData = filteredBookings.value.map((booking) => {
+          const parsed = Number.parseFloat(booking.aiRiskScore);
+          return Number.isFinite(parsed) ? parsed : 0;
+        });
 
         chartInstance.value = new Chart(ctx, {
           type: "bar",
@@ -469,6 +480,20 @@ export default {
     };
 
     onMounted(() => fetchDashboardData());
+
+    watch(filteredBookings, () => {
+      if (activeSection.value === "bookings") createChart();
+    }, { deep: true });
+
+    watch(activeSection, (section) => {
+      if (section === "bookings") {
+        createChart();
+      } else if (chartInstance.value) {
+        chartInstance.value.destroy();
+        chartInstance.value = null;
+      }
+    });
+
     onUnmounted(() => { if(chartInstance.value) chartInstance.value.destroy(); });
 
     return {
@@ -479,7 +504,7 @@ export default {
       merchantRiskCount, highRiskMerchantCount, fetchAIMetrics, riskClass,
       retrainingFraud, retrainingMerchant, handleRetrainFraud, handleRetrainMerchant,
       UserGroupIcon, UserIcon, DocumentTextIcon, ExclamationTriangleIcon, ShieldCheckIcon, XMarkIcon,
-      t
+      t, bookingChartSection
     };
   }
 };
