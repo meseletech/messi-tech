@@ -145,11 +145,11 @@
       <!-- Booking Cards -->
       <div class="booking-grid">
         <div v-for="booking in filteredBookings" :key="booking._id" class="booking-card" @click="openModal(booking)">
-          <img :src="getBookingImage(booking)" class="booking-image"/>
+          <img :src="getBookingImage(booking)" @error="$event.target.src = defaultImage" class="booking-image"/>
           <div class="booking-info">
             <h4>{{ booking.customerName || 'Customer' }}</h4>
             <p>Merchant: {{ booking.merchantName || 'Merchant' }}</p>
-            <p>Date: {{ formatDate(booking.createdAt) }}</p>
+            <p>Date: {{ formatDate(booking) }}</p>
             <span :class="['status-badge', booking.status?.toLowerCase()]">{{ booking.status }}</span>
             <div class="risk-score" :class="riskClass(booking.aiRiskScore)">
               AI Risk: {{ booking.aiRiskScore || 0 }}%
@@ -188,12 +188,12 @@
     <div v-if="selectedBooking" class="modal-overlay" @click.self="selectedBooking = null">
       <div class="modal">
         <h3>{{ t('dashboard.bookingDetails') }}</h3>
-        <img :src="selectedBooking.image || defaultImage" class="modal-image"/>
+        <img :src="getBookingImage(selectedBooking)" @error="$event.target.src = defaultImage" class="modal-image"/>
         <p><strong>{{ t('dashboard.customer') }}:</strong> {{ selectedBooking.customerName }}</p>
         <p><strong>{{ t('dashboard.merchant') }}:</strong> {{ selectedBooking.merchantName }}</p>
         <p><strong>{{ t('dashboard.bookingStatus') }}:</strong> {{ selectedBooking.status }}</p>
         <p><strong>{{ t('dashboard.aiRisk') }}:</strong> {{ selectedBooking.aiRiskScore || 0 }}%</p>
-        <p><strong>{{ t('dashboard.date') }}:</strong> {{ formatDate(selectedBooking.createdAt) }}</p>
+        <p><strong>{{ t('dashboard.date') }}:</strong> {{ formatDate(selectedBooking) }}</p>
         <button class="close-btn" @click="selectedBooking = null"> <XMarkIcon class="icon-sm" /> {{ t('dashboard.close') }} </button>
       </div>
     </div>
@@ -236,6 +236,7 @@ export default {
     const retrainingFraud = ref(false);
     const retrainingMerchant = ref(false);
     const defaultImage = "https://via.placeholder.com/300x200.png?text=No+Image";
+    const API_ORIGIN = "https://lmgtech-e1q0.onrender.com";
     const chartInstance = ref(null);
     const bookingChartSection = ref(null);
 
@@ -264,24 +265,85 @@ export default {
       listTitle.value = `${status.charAt(0).toUpperCase() + status.slice(1)} ${type}`;
     };
 
-    const formatDate = (date) => new Date(date).toLocaleDateString();
+    const formatDate = (value) => {
+      const fallback = "N/A";
+
+      const extractDateCandidate = (input) => {
+        if (!input) return null;
+
+        if (typeof input === "string" || typeof input === "number" || input instanceof Date) {
+          return input;
+        }
+
+        if (typeof input === "object") {
+          return (
+            input.createdAt ||
+            input.startDate ||
+            input.bookingDate ||
+            input.date ||
+            input.updatedAt ||
+            input?.created_at ||
+            input?.$date ||
+            null
+          );
+        }
+
+        return null;
+      };
+
+      const candidate = extractDateCandidate(value);
+      if (!candidate) return fallback;
+
+      const normalized = typeof candidate === "object" && candidate?.$date ? candidate.$date : candidate;
+      const parsed = new Date(normalized);
+
+      if (Number.isNaN(parsed.getTime())) return fallback;
+
+      return parsed.toLocaleDateString();
+    };
 
     const getBookingStatus = (booking) => {
       return (booking.status || booking.bookingStatus || booking.state || "unknown").toString();
     };
 
+    const normalizeImageUrl = (value) => {
+      if (!value || typeof value !== "string") return null;
+      if (/^https?:\/\//i.test(value)) return value;
+      if (value.startsWith("//")) return `https:${value}`;
+      if (value.startsWith("/")) return `${API_ORIGIN}${value}`;
+      return value;
+    };
+
     const getBookingImage = (booking) => {
-      return (
-        booking.image ||
-        booking.photo ||
-        booking.coverImage ||
-        booking.picture ||
-        booking.vehicleImage ||
-        booking.carImage ||
-        booking.customer?.avatar ||
-        booking.merchant?.logo ||
-        defaultImage
-      );
+      if (!booking) return defaultImage;
+
+      const candidates = [
+        booking.image,
+        booking.photo,
+        booking.coverImage,
+        booking.picture,
+        booking.vehicleImage,
+        booking.carImage,
+        booking.propertyImage,
+        booking.imageUrls?.[0],
+        booking.images?.[0],
+        booking.property?.image,
+        booking.property?.coverImage,
+        booking.property?.imageUrls?.[0],
+        booking.property?.images?.[0],
+        booking.asset?.image,
+        booking.asset?.imageUrls?.[0],
+        booking.asset?.images?.[0],
+        booking.customer?.avatar,
+        booking.merchant?.logo,
+      ];
+
+      for (const candidate of candidates) {
+        const normalized = normalizeImageUrl(candidate);
+        if (normalized) return normalized;
+      }
+
+      return defaultImage;
     };
 
     const estimateRisk = (booking) => {
@@ -500,7 +562,7 @@ export default {
       activeSection, toggleSection, showBookings, showList, totalMerchants, activeMerchants, suspendedMerchants,
       totalCustomers, activeCustomers, suspendedCustomers, totalBookings, bookingStatuses,
       filteredBookings, filterBookings, resetFilter, selectedList, listTitle, formatDate,
-      defaultImage, openModal, selectedBooking, aiAlertMessage, aiRiskAvg, aiAlerts, merchantRisks,
+      defaultImage, openModal, selectedBooking, aiAlertMessage, aiRiskAvg, aiAlerts, merchantRisks, getBookingImage,
       merchantRiskCount, highRiskMerchantCount, fetchAIMetrics, riskClass,
       retrainingFraud, retrainingMerchant, handleRetrainFraud, handleRetrainMerchant,
       UserGroupIcon, UserIcon, DocumentTextIcon, ExclamationTriangleIcon, ShieldCheckIcon, XMarkIcon,
